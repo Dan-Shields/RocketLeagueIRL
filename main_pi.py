@@ -4,8 +4,8 @@ import numpy as np
 from collections import deque
 import serial
 
+#TODO: change address to a linux specific one
 ser = serial.Serial('COM3', 1200)
-ser.write('5')
 
 lastDirection = "4"
 

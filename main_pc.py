@@ -5,7 +5,6 @@ from collections import deque
 import serial
 
 ser = serial.Serial('COM3', 1200)
-ser.write('5')
 
 lastDirection = "4"
 
