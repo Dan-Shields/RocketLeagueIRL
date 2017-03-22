@@ -38,12 +38,10 @@ while (True):
         cnt = max(contours, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(cnt)
 
-        M = cv2.moments(cnt)
-        if (M["m10"] != 0 and M["m00"] != 0 and M["m01"] != 0 and M["m00"] != 0):
-            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        if (radius > 10):
+            cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
 
-            if (radius > 10):
-               cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
+
 
     cv2.imshow('hsv', hsv)
     cv2.imshow('mask', mask)
