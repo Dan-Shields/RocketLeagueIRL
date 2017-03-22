@@ -19,8 +19,8 @@ while (True):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # define range of blue color in HSV
-    lower_color = np.array([110, 50, 50], dtype=np.uint8)
-    upper_color = np.array([130, 255, 255], dtype=np.uint8)
+    lower_color = np.array([20, 50, 50], dtype=np.uint8)
+    upper_color = np.array([75, 255, 255], dtype=np.uint8)
 
     # Threshold the HSV image to get only blue colors
     mask = cv2.inRange(hsv, lower_color, upper_color)
@@ -34,17 +34,22 @@ while (True):
     erode = cv2.erode(res,None,iterations = 3)
     dilate = cv2.dilate(erode,None,iterations = 10)
 
-    if (len(contours) != 0):
+    if (contours):
         cnt = max(contours, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(cnt)
 
         M = cv2.moments(cnt)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        if (M["m10"] != 0 and M["m00"] != 0 and M["m01"] != 0 and M["m00"] != 0):
+            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
-        if (radius > 15):
-           cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
+            if (radius > 10):
+               cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
 
-    cv2.imshow('img', hsv)
+    cv2.imshow('hsv', hsv)
+    cv2.imshow('mask', mask)
+    cv2.imshow('res', res)
+    cv2.imshow('imgray', imgray)
+    cv2.imshow('img', img)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
