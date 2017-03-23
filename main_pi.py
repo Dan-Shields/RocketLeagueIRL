@@ -1,20 +1,28 @@
 #!/usr/bin/env python
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+import time
 import cv2
 import numpy as np
 from collections import deque
 import serial
 
 #TODO: change address to a linux specific one
-ser = serial.Serial('COM3', 1200)
+ser = serial.Serial('/dev/ttyACM0', 9600)
 
 lastDirection = "4"
 
-cap = cv2.VideoCapture(0)
-pts = deque(maxlen=64)
-while True:
+camera = PiCamera()
+camera.resolution = (640, 480)
+camera.framerate = 32
+
+rawCapture = PiRGBArray(camera, size=(640, 480))
+
+time.sleep(0.1)
+for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
     # Take each frame
-    _, img = cap.read()
+    img = frame.array
     img = cv2.flip(img, 5)
 
     # Convert BGR to HSV
@@ -50,42 +58,28 @@ while True:
             if (x < 280):
                 print "turning left"
                 lastDirection = "3"
-                ser.write('3')
+                #ser.write('3')
             elif (x > 360):
                 print "turning right"
                 lastDirection = "4"
-                ser.write('4')
+                #ser.write('4')
             else:
                 print "going straight"
-                ser.write('1')
+                #ser.write('1')
     else:
         print "ball not found, turning " + lastDirection
-        ser.write(lastDirection)
-
-
-
-
-        #pts.appendleft(center)
-
-    # for i in xrange(1, len(pts)):
-    #     # if either of the tracked points are None, ignore
-    #     # them
-    #     if pts[i - 1] is None or pts[i] is None:
-    #         continue
-    #
-    #     # otherwise, compute the thickness of the line and
-    #     # draw the connecting lines
-    #     thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
-    #     cv2.line(img, pts[i - 1], pts[i], (0, 0, 255), thickness)
-
+        #ser.write(lastDirection)
 
     #cv2.imshow('hsv', hsv)
     #cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
-    cv2.imshow('img', img)
+    #cv2.imshow('img', img)
+
+    rawCapture.truncate(0)
+
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-ser.write('0')
+#ser.write('0')
 cv2.destroyAllWindows()

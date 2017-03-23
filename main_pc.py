@@ -4,7 +4,7 @@ import numpy as np
 from collections import deque
 import serial
 
-ser = serial.Serial('COM3', 1200)
+#ser = serial.Serial('COM3', 1200)
 
 lastDirection = "4"
 
@@ -49,33 +49,32 @@ while True:
             if (x < 280):
                 print "turning left"
                 lastDirection = "3"
-                ser.write('3')
+                #ser.write('3')
             elif (x > 360):
                 print "turning right"
                 lastDirection = "4"
-                ser.write('4')
+                #ser.write('4')
             else:
                 print "going straight"
-                ser.write('1')
+                #ser.write('1')
+
+            pts.appendleft(center)
     else:
         print "ball not found, turning " + lastDirection
-        ser.write(lastDirection)
+        #ser.write(lastDirection)
 
 
 
+    for i in xrange(1, len(pts)):
+        # if either of the tracked points are None, ignore
+        # them
+        if pts[i - 1] is None or pts[i] is None:
+            continue
 
-        #pts.appendleft(center)
-
-    # for i in xrange(1, len(pts)):
-    #     # if either of the tracked points are None, ignore
-    #     # them
-    #     if pts[i - 1] is None or pts[i] is None:
-    #         continue
-    #
-    #     # otherwise, compute the thickness of the line and
-    #     # draw the connecting lines
-    #     thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
-    #     cv2.line(img, pts[i - 1], pts[i], (0, 0, 255), thickness)
+        # otherwise, compute the thickness of the line and
+        # draw the connecting lines
+        thickness = int(np.sqrt(64 / float(i + 1)) * 2.5)
+        cv2.line(img, pts[i - 1], pts[i], (0, 0, 255), thickness)
 
 
     #cv2.imshow('hsv', hsv)
@@ -86,5 +85,5 @@ while True:
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-ser.write('0')
+#ser.write('0')
 cv2.destroyAllWindows()
