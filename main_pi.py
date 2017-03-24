@@ -39,9 +39,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
     imgray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(imgray, 127, 255, 0)
-    _, contours, _ = cv2.findContours(imgray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-
+    contours, _ = cv2.findContours(imgray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    ball_radius = 0
 
     if (contours):
     #for cnt in contours:
@@ -49,37 +48,33 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         ((x, y), radius) = cv2.minEnclosingCircle(cnt)
 
         center = None
-
-        if (radius > 5):
+        
+        if (radius > 10):
             cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
             center = (int(x),int(y))
 
-
-            if (x < 280):
+            if (x < 220):
                 print "turning left"
                 lastDirection = "3"
-                #ser.write('3')
-            elif (x > 360):
+                ser.write('3')
+            elif (x > 420):
                 print "turning right"
                 lastDirection = "4"
-                #ser.write('4')
+                ser.write('4')
             else:
                 print "going straight"
-                #ser.write('1')
+                ser.write('1')
+	else:
+	    print "ball not found, turning " + lastDirection
+	    ser.write(lastDirection)
     else:
-        print "ball not found, turning " + lastDirection
-        #ser.write(lastDirection)
-
-    #cv2.imshow('hsv', hsv)
-    #cv2.imshow('mask', mask)
-    #cv2.imshow('res', res)
-    #cv2.imshow('imgray', imgray)
-    #cv2.imshow('img', img)
+       	print "ball not found, turning " + lastDirection
+       	ser.write(lastDirection)
 
     rawCapture.truncate(0)
 
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-#ser.write('0')
+ser.write('0')
 cv2.destroyAllWindows()
