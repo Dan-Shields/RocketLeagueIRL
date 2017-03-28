@@ -13,10 +13,10 @@ ser = serial.Serial('/dev/ttyACM0', 9600)
 lastDirection = "0"
 
 camera = PiCamera()
-camera.resolution = (127, 95)
+camera.resolution = (640, 480)
 camera.framerate = 32
 
-rawCapture = PiRGBArray(camera, size=(127, 95))
+rawCapture = PiRGBArray(camera, size=(640, 480))
 
 time.sleep(0.1)
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -52,16 +52,16 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if (radius > 7):
             cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
             center = (int(x),int(y))
-            turn_value = x
+            turn_value = x/5.04
             ser.write("%d", % (turn_value))
             print "turn_value = %d" % turn_value
             if (turn_value < 27):
                 lastDirection = "0"
             else (turn_value > 100):
                 lastDirection = "127"
-	else:
-	    print "ball not found, turning " + lastDirection
-	    ser.write(lastDirection)
+	    else:
+	        print "ball not found, turning " + lastDirection
+	        ser.write(lastDirection)
     else:
        	print "ball not found, turning " + lastDirection
        	ser.write(lastDirection)
