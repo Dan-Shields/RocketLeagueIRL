@@ -6,8 +6,8 @@ const int enableRight = 10;
 const int enableLeft = 9;
 
 bool move,L,R,F_B,enable;
-int speedByte,x,storedSpeedByte,i,n,controlByte,storedControlByte;
-
+int speedByte,x,storedSpeedByte,i,n,controlByte,storedControlByte, inChar;
+char inString
 
 void forwardLeft(){
   analogWrite(enableLeft, speedByte);
@@ -75,10 +75,24 @@ void setup(){
 void loop(){
   if(Serial.available()){
     controlByte = Serial.read();
+    int inChar = Serial.read();
+    if (isDigit(inChar)) {
+      // convert the incoming byte to a char
+      // and add it to the string:
+      inString += (char)inChar;
+    }
+    // if you get a newline, print the string,
+    // then the string's value:
+    if (inChar == '\n') {
+      Serial.print("Value:");
+      Serial.println(inString.toInt());
+      Serial.print("String: ");
+      Serial.println(inString);
+      // clear the string for new input:
+      inString = "";
+    }
     Serial.print('control Byte = %d',controlByte);
-    delay(5);
     enable = bitRead(controlByte, 7);
-    Serial.print('Enable = %d',enable);
     if(enable == 0){
       controlByte = storedControlByte;
       speedByte = storedSpeedByte;
