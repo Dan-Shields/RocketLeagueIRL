@@ -24,6 +24,15 @@ def sendData(control_array, turn_speed_int):
     ser.write(controlInt)
     ser.write(turn_speed_int)
 
+def ballNotFound():
+    print "ball not found, turning left = " + lastDirectionLeft
+    left = lastDirectionLeft
+    right = not left
+    controls = np.array([1, headingForward, left, right, False, False, False, False], dtype=np.bool)
+    turnSpeed = 255
+
+    sendData(controls, turnSpeed)
+
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
@@ -64,20 +73,21 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             if x < 320:
                 turnSpeed = int (x * (255/320))
                 left = True
-                lastDirectionLeft = True
             elif x > 320:
                 turnSpeed = int ((x-320) * (255/320))
                 right = True
-                lastDirectionLeft = False
+
+            lastDirectionLeft = left
 
             controls = np.array([move, headingForward, left, right, False, False, False,  False], dtype=np.bool)
 
             sendData(controls, turnSpeed)
 
         else:
-            print "ball not found, turning left = " + lastDirectionLeft
+            ballNotFound()
+
     else:
-        print "ball not found, turning left = " + lastDirectionLeft
+        ballNotFound()
 
     rawCapture.truncate(0)
 
