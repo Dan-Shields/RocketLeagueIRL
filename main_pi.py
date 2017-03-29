@@ -8,8 +8,7 @@ import serial
 
 ser = serial.Serial('/dev/ttyACM0', 9600)
 
-lastDirection = True # 1= left, 0= right
-left = right = headingForward = pivot = False
+lastDirectionLeft = True # 1= left, 0= right
 
 camera = PiCamera()
 camera.resolution = (640, 480)
@@ -18,6 +17,14 @@ camera.framerate = 32
 rawCapture = PiRGBArray(camera, size=(640, 480))
 
 time.sleep(0.1)
+
+
+def sendData(control_array, turn_speed_int):
+    controlInt = np.packbits(control_array, None)
+    ser.write(controlInt)
+    ser.write(turn_speed_int)
+
+
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
     # Take each frame
@@ -49,16 +56,28 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
         if radius > 10:
             #ball has been found
-            left = False
-            right = False
 
+            left = right = False
+            headingForward = move = True
+
+            turnSpeed = 0
+            if x < 320:
+                turnSpeed = int (x * (255/320))
+                left = True
+                lastDirectionLeft = True
+            elif x > 320:
+                turnSpeed = int ((x-320) * (255/320))
+                right = True
+                lastDirectionLeft = False
+
+            controls = np.array([move, headingForward, left, right, False, False, False,  False], dtype=np.bool)
+
+            sendData(controls, turnSpeed)
 
         else:
-            print "ball not found, turning " + lastDirection
-            ser.write(lastDirection)
+            print "ball not found, turning left = " + lastDirectionLeft
     else:
-        print "ball not found, turning " + lastDirection
-        ser.write(lastDirection)
+        print "ball not found, turning left = " + lastDirectionLeft
 
     rawCapture.truncate(0)
 
@@ -67,6 +86,3 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         break
 ser.write('0')
 cv2.destroyAllWindows()
-
-
-def SendData(controls, turnSpeed):
