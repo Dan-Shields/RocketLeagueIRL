@@ -4,54 +4,55 @@ const int In3 = 5;
 const int In4 = 6;
 const int enableRight = 10;
 const int enableLeft = 9;
+bool readFin = false;
+int turnSpeed = 255,globalSpeed = 0,x,i,n,controlByte, inChar,move,L,R,F_B,enable;
+double speedRatio = 1;
+String inString = "";
 
-bool move,L,R,F_B,enable;
-int speedByte,x,storedSpeedByte,i,n,controlByte,storedControlByte, inChar;
-char inString
-
-void forwardLeft(){
-  analogWrite(enableLeft, speedByte);
-  analogWrite(enableRight, 255);
+void forwardLeft() {
+  analogWrite(enableLeft, (int) (turnSpeed * speedRatio));
+  analogWrite(enableRight, globalSpeed);
   digitalWrite (In1, LOW);
   digitalWrite (In2, HIGH);
   digitalWrite (In3, HIGH);
   digitalWrite (In4, LOW);
 }
-void forwardRight(){
-  analogWrite(enableLeft, 255);
-  analogWrite(enableRight, speedByte);
+
+void forwardRight() {
+  analogWrite(enableLeft, globalSpeed);
+  analogWrite(enableRight, (int) (turnSpeed * speedRatio));
   digitalWrite (In1, LOW);
   digitalWrite (In2, HIGH);
   digitalWrite (In3, HIGH);
   digitalWrite (In4, LOW);
 }
 void backwardLeft(){
-  analogWrite(enableLeft, 255);
-  analogWrite(enableRight, speedByte);
+  analogWrite(enableLeft, globalSpeed);
+  analogWrite(enableRight, (int) (turnSpeed * speedRatio));
   digitalWrite (In1, HIGH);
   digitalWrite (In2, LOW);
   digitalWrite (In3, LOW);
   digitalWrite (In4, HIGH);
 }
 void backwardRight(){
-  analogWrite(enableLeft, speedByte);
-  analogWrite(enableRight, 255);
+  analogWrite(enableLeft, (int) (turnSpeed * speedRatio));
+  analogWrite(enableRight, globalSpeed);
   digitalWrite (In1, HIGH);
   digitalWrite (In2, LOW);
   digitalWrite (In3, LOW);
   digitalWrite (In4, HIGH);
 }
 void forward(){
-  analogWrite(enableLeft, 255);
-  analogWrite(enableRight, 255);
+  analogWrite(enableLeft, globalSpeed);
+  analogWrite(enableRight, globalSpeed);
   digitalWrite (In1, LOW);
   digitalWrite (In2, HIGH);
   digitalWrite (In3, HIGH);
   digitalWrite (In4, LOW);
 }
 void backward(){
-  analogWrite(enableLeft, 255);
-  analogWrite(enableRight, 255);
+  analogWrite(enableLeft, globalSpeed);
+  analogWrite(enableRight, globalSpeed);
   digitalWrite (In1, HIGH);
   digitalWrite (In2, LOW);
   digitalWrite (In3, LOW);
@@ -74,38 +75,55 @@ void setup(){
 }
 void loop(){
   if(Serial.available()){
-    controlByte = Serial.read();
-    int inChar = Serial.read();
-    if (isDigit(inChar)) {
-      // convert the incoming byte to a char
-      // and add it to the string:
-      inString += (char)inChar;
+    while (readFin != true) {
+      inChar = Serial.read();
+      if (inChar != '\n') {
+          inString += (char)inChar;
+      } 
+      else {
+        controlByte = inString.toInt();
+        inString = "";
+        inChar = "";
+        readFin = true;
+      }
     }
-    // if you get a newline, print the string,
-    // then the string's value:
-    if (inChar == '\n') {
-      Serial.print("Value:");
-      Serial.println(inString.toInt());
-      Serial.print("String: ");
-      Serial.println(inString);
-      // clear the string for new input:
-      inString = "";
+    readFin = false;
+    while (readFin != true) {
+      inChar = Serial.read();
+      if (inChar != '\n') {
+        inString += (char)inChar;
+      } 
+      else {
+        turnSpeed = 255 - inString.toInt();
+        inString = "";
+        inChar = "";
+        readFin = true;
+      }
     }
-    Serial.print('control Byte = %d',controlByte);
+	readFin = false;
+	while (readFin != true) {
+		inChar = Serial.read();
+		if (inChar != '\n') {
+			inString += (char)inChar;
+		} 
+		else {
+			globalSpeed = inString.toInt();
+			speedRatio = globalSpeed / 255;
+			inString = "";
+			inChar = "";
+			readFin = true;
+		}
+    }
+    readFin = false;
+    
     enable = bitRead(controlByte, 7);
-    if(enable == 0){
-      controlByte = storedControlByte;
-      speedByte = storedSpeedByte;
-    }
     move = bitRead(controlByte, 6);
     F_B = bitRead(controlByte, 5);
     L = bitRead(controlByte, 4);
     R = bitRead(controlByte, 3);
-    storedControlByte = controlByte;
-    storedSpeedByte = speedByte;
-    if(move == 1){
+    if(move == 1) {
     
-      if(F_B == 1){
+      if(F_B == 1) {
         if(L == 1){
           if(R == 1){
             stationary();
@@ -116,37 +134,36 @@ void loop(){
         }
         if(L == 0){
           if(R == 1){
-            backwardLeft();
+            forwardRight();
            
           }
           if(R == 0){
-            
+            forward();
           }
         }
       }
       if(F_B == 0){
-        if(L == 1){
-          if(R == 1){
+        if(L == 1 && R == 1){
             backward();
-            
-          }
         }
-        
-        if(L == 0){
+        else if(L == 0){
           if(R == 1){
             backwardRight();
-            
           }
           if(R == 0){
-            stationary();
-            
+            backward();
           }
+        }
+        else{
+           backwardLeft();
         }
         
       }
       
     }
+    else{
+      stationary();
+    }
   }
 }
   
-
