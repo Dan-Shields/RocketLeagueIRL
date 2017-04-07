@@ -5,7 +5,8 @@ const int In4 = 6;
 const int enableRight = 10;
 const int enableLeft = 9;
 bool readFin = false;
-int turnSpeed = 255,globalSpeed = 0,x,i,n,controlByte, inChar,move,L,R,F_B,enable;
+int turnSpeed = 255,globalSpeed = 0,x,i,n,controlByte,move,L,R,F_B,enable,byteNum = 0;
+char inChar;
 double speedRatio = 1;
 String inString = "";
 
@@ -75,94 +76,77 @@ void setup(){
 }
 void loop(){
   if(Serial.available()){
-    while (readFin != true) {
-      inChar = Serial.read();
-      if (inChar != '\n') {
-          inString += (char)inChar;
-      } 
-      else {
-        controlByte = inString.toInt();
-        inString = "";
-        inChar = "";
-        readFin = true;
-      }
-    }
-    readFin = false;
-    while (readFin != true) {
-      inChar = Serial.read();
-      if (inChar != '\n') {
+    inChar = Serial.read();
+    if (inChar != '\n') {
         inString += (char)inChar;
-      } 
-      else {
-        turnSpeed = 255 - inString.toInt();
+    } 
+    else {
+      
+      byteNum++;
+    }
+    
+    switch (byteNum) {
+      case (1):
+        controlByte = inString.toInt();
+        Serial.println(controlByte);
         inString = "";
-        inChar = "";
-        readFin = true;
-      }
-    }
-	readFin = false;
-	while (readFin != true) {
-		inChar = Serial.read();
-		if (inChar != '\n') {
-			inString += (char)inChar;
-		} 
-		else {
-			globalSpeed = inString.toInt();
-			speedRatio = globalSpeed / 255;
-			inString = "";
-			inChar = "";
-			readFin = true;
-		}
-    }
-    readFin = false;
-    
-    enable = bitRead(controlByte, 7);
-    move = bitRead(controlByte, 6);
-    F_B = bitRead(controlByte, 5);
-    L = bitRead(controlByte, 4);
-    R = bitRead(controlByte, 3);
-    if(move == 1) {
-    
-      if(F_B == 1) {
-        if(L == 1){
-          if(R == 1){
-            stationary();
+      case (2):
+        turnSpeed = inString.toInt();
+        Serial.println(turnSpeed);
+        inString = "";
+      case (3):
+        globalSpeed = inString.toInt();
+        Serial.println(globalSpeed);
+        inString = "";
+        byteNum = 0;
+
+        enable = bitRead(controlByte, 7);
+        move = bitRead(controlByte, 6);
+        F_B = bitRead(controlByte, 5);
+        L = bitRead(controlByte, 4);
+        R = bitRead(controlByte, 3);
+        if(move == 1) {
+          if(F_B == 1) {
+            if(L == 1){
+              if(R == 1){
+                stationary();
+              }
+              if(R == 0){
+                forwardLeft();
+              }
+            }
+            if(L == 0){
+              if(R == 1){
+                forwardRight();
+               
+              }
+              if(R == 0){
+                forward();
+              }
+            }
           }
-          if(R == 0){
-            forwardLeft();
+          if(F_B == 0){
+            if(L == 1 && R == 1){
+                backward();
+            }
+            else if(L == 0){
+              if(R == 1){
+                backwardRight();
+              }
+              if(R == 0){
+                backward();
+              }
+            }
+            else{
+               backwardLeft();
+            }
+            
           }
-        }
-        if(L == 0){
-          if(R == 1){
-            forwardRight();
-           
-          }
-          if(R == 0){
-            forward();
-          }
-        }
-      }
-      if(F_B == 0){
-        if(L == 1 && R == 1){
-            backward();
-        }
-        else if(L == 0){
-          if(R == 1){
-            backwardRight();
-          }
-          if(R == 0){
-            backward();
-          }
+          
         }
         else{
-           backwardLeft();
+          stationary();
         }
-        
-      }
-      
-    }
-    else{
-      stationary();
     }
   }
 }
