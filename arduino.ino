@@ -90,7 +90,7 @@ void loop(){
   starttime = millis();
   
   while ( (Serial.available()<3) && ((millis() - starttime) < MAX_MILLIS_TO_WAIT) )
-  {      
+  {
     // hang in this loop until we either get 3 bytes of data or 1 second
     // has gone by
   }
@@ -106,16 +106,17 @@ void loop(){
     turnSpeed = Serial.read();
     globalSpeed = Serial.read();
     
-    Serial.println(controlByte, BIN);
-    Serial.println(turnSpeed, DEC);
-    Serial.println(globalSpeed, DEC);
+    //Serial.println(controlByte, BIN);
+    //Serial.println(turnSpeed, DEC);
+    //Serial.println(globalSpeed, DEC);
     
-    /*
+    
     enable = bitRead(controlByte, 7);
     move = bitRead(controlByte, 6);
     F_B = bitRead(controlByte, 5);
     L = bitRead(controlByte, 4);
     R = bitRead(controlByte, 3);
+    
     if(move == 1) {
       if(F_B == 1) {
         if(L == 1) {
@@ -155,7 +156,7 @@ void loop(){
     }
     else {
       stationary();
-    }*/
+    }
   }
 }
   
