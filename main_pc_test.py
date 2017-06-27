@@ -40,23 +40,24 @@ while True:
         epsilon = 0.2*cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt,epsilon,True)
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
-        #x,y,w,h = cv2.boundingRect(approx)
+        x,y,w,h = cv2.boundingRect(approx)
+        
 
-        """center = None
+        center = None
 
         if (w > 10):
             #cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
             #center = (int(x),int(y))
-            cv2.rectangle(img,(int(x),int(y)),(int(x+w),int(y+h)),[0,255,0],2)
-            centerx = int((x+w)/2)
-            centery = int((y+h)/2)
+            (center (x,y), (w,h) , _) = cv2.minAreaRect(cnt)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            cv2.drawContours(img,[box],0,(0,0,255),2)
 
-
-            if (centerx < 220):
+            if (x < 220):
                 print "turning left"
                 lastDirection = "6"
                 #ser.write('3')
-            elif (centerx > 420):
+            elif (x > 420):
                 print "turning right"
                 lastDirection = "5"
                 #ser.write('4')
