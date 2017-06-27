@@ -3,8 +3,11 @@ void setup() {
 }
 
 void loop() {
-  if(Serial.available() > 0) {
-    byte data = Serial.read();
+  if(Serial.available() == 3) {
+    unsigned char[] data;
+    data[0] = Serial.read();
+    data[1] = Serial.read();
+    data[2] = Serial.read();
     Serial.write(data);
   }
 }

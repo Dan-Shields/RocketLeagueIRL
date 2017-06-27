@@ -3,13 +3,16 @@ import numpy as np
 import serial
 
 
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050)
+ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
-data = np.array([True, False, True, False, True, False, True, False], dtype=np.bool)
+a = np.packbits([1,0,1,0], axis=0)
+b = np.append(a,[255,128])
+
+data = bytearray(b)
+
 ser.write(data)
 
-while ser.in_waiting:
-    print ser.readline()
-
-
+while True:
+    if ser.inWaiting() != 0:
+        print ser.readline()
 ser.close()
