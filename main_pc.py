@@ -32,7 +32,7 @@ while True:
     _, contours, _ = cv2.findContours(imgray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 
-    x = 3
+    x = 2
     #if (contours):
     for cnt in contours:#
         x = x - 1
@@ -64,7 +64,7 @@ while True:
             print "ball not found, turning " + lastDirection
             #ser.write(lastDirection)
         if (x=0):
-            x = 3
+            x = 2
             break
 
     #else:
