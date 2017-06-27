@@ -12,6 +12,10 @@ data = bytearray(iter(b))
 ser.write(data)
 
 while True:
-    if ser.inWaiting() != 0:
+    if ser.inWaiting() == 3:
+        ser.write(data)
         print ser.read()
+        print ser.read()
+        print ser.read()
+
 ser.close()
