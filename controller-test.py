@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-import numpy as nps
+import numpy as np
 import serial
 import xbox
 joy = xbox.Joystick()
 
-ser = serial.Serial('/dev/ttyAMC0', 9600, timeout=0.050, bytesize=8)
+ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
 enable = 1
 
-while not joy.Back()
+while not joy.Back():
     throttle = joy.rightTrigger()
     brake = joy.leftTrigger()
     x_axis = joy.leftX()
