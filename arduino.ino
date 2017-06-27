@@ -5,13 +5,11 @@ const int In4 = 6;
 const int enableRight = 10;
 const int enableLeft = 9;
 bool readFin = false;
-int turnSpeed = 255,globalSpeed = 0,x,i,n,move,L,R,F_B,enable,byteNum = 0;
-unsigned char controlByte;
-int inChar;
+int turnSpeed = 255,globalSpeed = 0,x,i,n,move,L,R,F_B,enable;
+byte controlByte;
 double speedRatio = 1;
-String inString = "";
 
-#define MAX_MILLIS_TO_WAIT 1000  //or whatever
+#define MAX_MILLIS_TO_WAIT 1000
 unsigned long starttime;
 
 void forwardLeft()
@@ -102,13 +100,13 @@ void loop(){
   }
   else
   {
-    controlByte = (unsigned char)Serial.read();
-    turnSpeed = Serial.read();
-    globalSpeed = Serial.read();
+    controlByte = (byte)Serial.read();
+    turnSpeed = (int)Serial.read();
+    globalSpeed = (int)Serial.read();
     
-    //Serial.println(controlByte, BIN);
-    //Serial.println(turnSpeed, DEC);
-    //Serial.println(globalSpeed, DEC);
+    Serial.write(controlByte, 1);
+    Serial.write((byte)turnSpeed, 1);
+    Serial.write((byte)globalSpeed, 1);
     
     
     enable = bitRead(controlByte, 7);
@@ -159,4 +157,3 @@ void loop(){
     }
   }
 }
-  
