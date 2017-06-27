@@ -49,7 +49,7 @@ while True:
             #cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
             #center = (int(x),int(y))
             (x,y),(w,h) , _= cv2.minAreaRect(cnt)
-            box = cv2.boxPoints(rect)
+            box = cv2.boxPoints((x,y))
             box = np.int0(box)
             cv2.drawContours(img,[box],0,(0,0,255),2)
 
