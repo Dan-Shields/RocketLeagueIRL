@@ -36,8 +36,6 @@ while True:
     #if (contours):
     for cnt in contours:#
         x = x - 1
-        if (x = 0):
-            continue
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
         x,y,w,h = cv2.boundingRect(cnt)
 
@@ -67,7 +65,7 @@ while True:
             #ser.write(lastDirection)
         if (x=0):
             x = 3
-            contiue
+            break
 
     #else:
     #    print "ball not found, turning " + lastDirection
