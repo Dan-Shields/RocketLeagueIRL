@@ -102,16 +102,14 @@ void loop(){
     turnSpeed = Serial.read();
     globalSpeed = Serial.read();
     
-    Serial.write(controlByte);
-    Serial.write(turnSpeed);
-    Serial.write(globalSpeed);
+    Serial.write(128);
     
     
-    enable = bitRead((int)controlByte, 7);
-    move = bitRead((int)controlByte, 6);
-    F_B = bitRead((int)controlByte, 5);
-    L = bitRead((int)controlByte, 4);
-    R = bitRead((int)controlByte, 3);
+    enable = bitRead(controlByte, 7);
+    move = bitRead(controlByte, 6);
+    F_B = bitRead(controlByte, 5);
+    L = bitRead(controlByte, 4);
+    R = bitRead(controlByte, 3);
     
     if(move == 1) {
       if(F_B == 1) {
