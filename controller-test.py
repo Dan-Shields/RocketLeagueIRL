@@ -26,9 +26,9 @@ while not joy.Back():
 
     data = bytearray(iter(b))
 
-    if move = 1 and F_B = 1:
+    if move == 1 and F_B == 1:
         print "Moving forwards"
-    elif move = 1 and F_B = 0:
+    elif move == 1 and F_B == 0:
         print "Moving backwards"
 
     #write data if previous data was received
