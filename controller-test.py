@@ -26,9 +26,9 @@ while not joy.Back():
     move = int(global_speed > 20)
     F_B = int(throttle > brake)
 
-    turn_speed = 255 - int(abs(x_axis) * 255)
-    L = int(x_axis < 0)
-    R = int(x_axis > 0)
+    turn_speed = 255 - int(abs(x_axis) * 128)
+    L = int(not (x_axis < 0 and F_B == 0))
+    R = int(not (x_axis > 0 and F_B == 0))
 
     if not joy.B():
         global_speed = int(global_speed / 2)
