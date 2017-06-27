@@ -6,8 +6,6 @@ joy = xbox.Joystick()
 
 ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
-
-
 a = np.packbits([0, 1, 1, 1, 1, 1, 1, 1], axis=0)
 b = np.append(a, [255, 255])
 

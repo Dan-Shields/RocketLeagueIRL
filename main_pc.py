@@ -1,33 +1,42 @@
 #!/usr/bin/env python
-
 import cv2
-
 import numpy as np
-
 from collections import deque
-
 import serial
-
-
 
 def getcontours(contours, n):
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     return contours[:n]
 
-#ser = serial.Serial('COM3', 1200)
+def send_data(control_array, turn_speed_int, global_speed_int):
+    a = np.packbits(control_array, axis=0)
+    b = np.append(a, [turn_speed_int, global_speed_int])
+    data = bytearray(iter(b))
 
-def sendData(control_array, turn_speed_int):
-    controlInt = np.packbits(control_array, None)
-    ser.write(controlInt)
-    ser.write(turn_speed_int)
+    ser.write(data)
 
+def send_handshake():
+    print "Sending handshake"
+    start_time = time.time()
+    ser.write(127)
+    while True:
+        if ser.inWaiting() and ser.read() == 127:
+            break
+        else if time.time() - start_time > 1:
+            sys.exit("Handshake failed or connection was lost")
 
-ser = serial.Serial('COM3', 1200)
+ser = serial.Serial('COM3', 9600), timeout=0.050, bytesize=8
 
-lastDirection = "4"
+send_handshake()
+
+enable = 1
 
 cap = cv2.VideoCapture(0)
 while True:
+    if ser.inWaiting():
+        if ser.read == 63:
+            # reconnect was requested
+            send_handshake()
 
     # Take each frame
     _, img = cap.read()
@@ -51,14 +60,9 @@ while True:
     _, contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if (contours):
-    #for cnt in contours:#
-        #cnt1 = max(contours, key=cv2.contourArea)
-        #contours.remove(max(contours, key=cv2.contourArea))
-        #cnt2 = max(contours, key=cv2.contourArea)
         cnt = getcontours(contours, 2)
         epsilon1 = 0.01*cv2.arcLength(cnt[0], True)
         approx1 = cv2.approxPolyDP(cnt[0],epsilon1,True)
-        #((x, y), radius) = cv2.minEnclosingCircle(cnt)
         x,y,w,h = cv2.boundingRect(approx1)
         w1 = 0
         if (len(cnt) > 1):
@@ -68,9 +72,7 @@ while True:
 
         center = None
 
-        if (w > 50):
-            #cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
-            #center = (int(x),int(y))
+        if (w > 50):)
             box1 = cv2.boxPoints(cv2.minAreaRect(approx1))
             box1 = np.int0(box1)
             if (w1> 50): 
@@ -91,30 +93,6 @@ while True:
                 cv2.putText(img, shape1, (x1,y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2) 
             cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approx1],0,(0,255,0),2)
-
-            """if (x < 220):
-                print "turning left"
-                lastDirection = "6"
-                #ser.write('3')
-            elif (x > 420):
-                print "turning right"
-                lastDirection = "5"
-                #ser.write('4')
-            else:
-                print "going straight"
-                #ser.write('1')
-        else:
-            print "ball not found, turning " + lastDirection
-            #ser.write(lastDirection)s"""
-    #else:
-    #    print "ball not found, turning " + lastDirection
-    #    #ser.write(lastDirection)
-            sendData(controls, turnSpeed)
-
-        else:
-            print "ball not found, turning left = " + lastDirectionLeft
-    else:
-        print "ball not found, turning left = " + lastDirectionLeft
 
 
     cv2.imshow('img', img)
