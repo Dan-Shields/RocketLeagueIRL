@@ -4,7 +4,7 @@ void setup() {
 
 void loop() {
   if(Serial.available() == 3) {
-    unsigned char[] data;
+    unsigned char data[3];
     data[0] = Serial.read();
     data[1] = Serial.read();
     data[2] = Serial.read();
