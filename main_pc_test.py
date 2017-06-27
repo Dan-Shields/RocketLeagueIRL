@@ -37,8 +37,8 @@ while True:
     #if (contours):
     for cnt in contours:#
         t--
-        epsilon = 0.2*cv2.arclength(cnt, True)
-        approx = cv2.approxPolyDP(cnt,epsilon,TRUE)
+        epsilon = 0.2*cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt,epsilon,True)
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
         #x,y,w,h = cv2.boundingRect(approx)
 
