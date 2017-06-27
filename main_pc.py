@@ -2,7 +2,6 @@
 import cv2
 import numpy as np
 from collections import deque
-import serial
 
 #ser = serial.Serial('COM3', 1200)
 
@@ -46,27 +45,27 @@ while True:
             #cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
             #center = (int(x),int(y))
             cv2.rectangle(img,(int(x),int(y)),(int(x+w),int(y+h)),[0,255,0],2)
-            centerx = (int((x+w)/2)
-            centery = (int((y+h)/2))
+            centerx = int((x+w)/2)
+            centery = int((y+h)/2)
 
 
             if (centerx < 220):
                 print "turning left"
                 lastDirection = "6"
-                ser.write('3')
+                #ser.write('3')
             elif (centerx > 420):
                 print "turning right"
                 lastDirection = "5"
-                ser.write('4')
+                #ser.write('4')
             else:
                 print "going straight"
-                ser.write('1')
+                #ser.write('1')
+        else:
+            print "ball not found, turning " + lastDirection
+            #ser.write(lastDirection)
     else:
         print "ball not found, turning " + lastDirection
-        ser.write(lastDirection)
-    else:
-        print "ball not found, turning " + lastDirection
-        ser.write(lastDirection)
+        #ser.write(lastDirection)
 
 
 
