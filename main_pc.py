@@ -37,7 +37,7 @@ while True:
     for cnt in contours:#
         x = x - 1
         if (x = 0):
-            break
+            continue
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
         x,y,w,h = cv2.boundingRect(cnt)
 
