@@ -2,16 +2,16 @@
 import numpy as np
 import serial
 
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
+ser = serial.Serial('COM3', 9600, timeout=0.050, bytesize=8)
 
 a = np.packbits([1, 0, 1, 0], axis=0)
-b = np.append(a, [255, 128])
+b = np.append(a, [57, 128])
 
-data = bytearray(b)
+data = bytearray(iter(b))
 
 ser.write(data)
 
 while True:
     if ser.inWaiting() != 0:
-        print ser.readline()
+        print ser.read()
 ser.close()
