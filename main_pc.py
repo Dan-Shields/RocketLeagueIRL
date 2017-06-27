@@ -37,31 +37,36 @@ while True:
     if (contours):
     #for cnt in contours:
         cnt = max(contours, key=cv2.contourArea)
-        ((x, y), radius) = cv2.minEnclosingCircle(cnt)
+        #((x, y), radius) = cv2.minEnclosingCircle(cnt)
+        x,y,w,h = cv2.boundingRect(cnt)
 
         center = None
+        
+        if (w > 10):
+            #cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
+            #center = (int(x),int(y))
+            cv2.rectangle(img,(int(x),int(y)),(int(x+w),int(y+h)),[0,255,0],2)
+            centerx = (int((x+w)/2)
+            centery = (int((y+h)/2))
 
-        if (radius > 5):
-            cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
-            center = (int(x),int(y))
 
-
-            if (x < 280):
+            if (centerx < 220):
                 print "turning left"
-                lastDirection = "3"
-                #ser.write('3')
-            elif (x > 360):
+                lastDirection = "6"
+                ser.write('3')
+            elif (centerx > 420):
                 print "turning right"
-                lastDirection = "4"
-                #ser.write('4')
+                lastDirection = "5"
+                ser.write('4')
             else:
                 print "going straight"
-                #ser.write('1')
-
-            pts.appendleft(center)
+                ser.write('1')
     else:
         print "ball not found, turning " + lastDirection
-        #ser.write(lastDirection)
+        ser.write(lastDirection)
+    else:
+        print "ball not found, turning " + lastDirection
+        ser.write(lastDirection)
 
 
 
