@@ -8,6 +8,13 @@ ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
 enable = 1
 
+a = np.packbits([0, 1, 1, 1, 1, 1, 1, 1], axis=0)
+b = np.append(a, [255, 255])
+
+data = bytearray(iter(b))
+ser.write(data)
+print "Sending handshake"
+
 while not joy.Back():
     throttle = joy.rightTrigger()
     brake = joy.leftTrigger()
