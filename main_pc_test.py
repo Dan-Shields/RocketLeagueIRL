@@ -36,7 +36,7 @@ while True:
     t = 2
     #if (contours):
     for cnt in contours:#
-        t--
+        t=t-1
         epsilon = 0.2*cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt,epsilon,True)
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
