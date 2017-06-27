@@ -32,6 +32,7 @@ send_handshake()
 enable = 1
 
 cap = cv2.VideoCapture(0)
+pts = deque(maxlen=64)
 while True:
     if ser.inWaiting():
         if ser.read == 63:
@@ -59,47 +60,80 @@ while True:
     ret, thresh = cv2.threshold(blurred, 127, 255, 0)
     _, contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+
+
     if (contours):
+    #for cnt in contours:#
+        #cnt1 = max(contours, key=cv2.contourArea)
+        #contours.remove(max(contours, key=cv2.contourArea))
+        #cnt2 = max(contours, key=cv2.contourArea)
+        h1 = 1
+        h = 1
         cnt = getcontours(contours, 2)
         epsilon1 = 0.01*cv2.arcLength(cnt[0], True)
         approx1 = cv2.approxPolyDP(cnt[0],epsilon1,True)
-        x,y,w,h = cv2.boundingRect(approx1)
+        #((x, y), radius) = cv2.minEnclosingCircle(cnt)
+        (x,y),(w,h),_ = cv2.minAreaRect(approx1)
         w1 = 0
         if (len(cnt) > 1):
             epsilon2 = 0.01*cv2.arcLength(cnt[1], True)
             approx2 = cv2.approxPolyDP(cnt[1],epsilon2,True)
-            x1,y1,w1,h1 = cv2.boundingRect(approx2)
+            (x1,y1),(w1,h1),_ = cv2.minAreaRect(approx2)
+
+
 
         center = None
 
-        if (w > 50):)
+        if (w > 20):
+            #cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
+            #center = (int(x),int(y))
             box1 = cv2.boxPoints(cv2.minAreaRect(approx1))
             box1 = np.int0(box1)
-            if (w1> 50): 
+            """if (int(h) == 0):
+                continue"""
+            if (w1> 20): 
                 box2 = cv2.boxPoints(cv2.minAreaRect(approx2))
                 box2 = np.int0(box2)
                 cv2.drawContours(img, [box2],0,(255,255,0),2)
                 cv2.drawContours(img,[approx2], 0,(255,0,0), 2)
-                if (w1/h1 > w/h):
+                """if (h1 == 0):
+                    continue"""
+                """if (w1/h1 > w/h):
                     shape1 = "goal"
                     shape = "ball"
                     print "Goal Height %d" %int(h1) + " Width %d" %int(w1) + " Ratio %d" %int(w1/h1) + "Ball Height %d" %int(h) + " Width %d" % int(w) + " Ratio: %d" %int(w/h)        
 
                 else:
                     shape1 = "ball"
+                    shape = "goal" """
+                if ((w/h > 5 or h/w > 5) or len(approx1) < 7):
                     shape = "goal"
+                    shape1 = "ball"
+                    print "Goal Height %d" %int(h1) + " Width %d" %int(w1) + " Ratio %d" %int(w1/h1) + "Ball Height %d" %int(h) + " Width %d" % int(w) + " Ratio: %d" %int(w/h)
+                else:
+                    shape = "ball"
+                    shape1 = "goal"
                     print "Goal Height %d" %int(h) + " Width %d" %int(w) + " Ratio %d" %int(w/h) + "Ball Height %d" %int(h1) + " Width %d" % int(w1) + " Ratio: %d" %int(w1/h1)
-                cv2.putText(img, shape, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                cv2.putText(img, shape1, (x1,y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2) 
+
+                cv2.putText(img, shape, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+                cv2.putText(img, shape1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2) 
+            else:
+                if ((w/h > 5 or h/w > 5) or len(approx1) < 7):
+                    shape = "goal"
+                else:
+                    shape = "ball"
+                cv2.putText(img, shape, (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
             cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approx1],0,(0,255,0),2)
 
-
+    #cv2.imshow('hsv', hsv)
+    #cv2.imshow('mask', mask)
+    #cv2.imshow('res', res)
+    #cv2.imshow('imgray', imgray)
     cv2.imshow('img', img)
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-
-ser.write('0')
+#ser.write('0')
 cv2.destroyAllWindows()
-
+>>>>>>> opencv-testing
