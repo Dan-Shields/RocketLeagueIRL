@@ -4,9 +4,7 @@ const int In3 = 5;
 const int In4 = 6;
 const int enableRight = 10;
 const int enableLeft = 9;
-bool readFin = false;
-int turnSpeed = 255,globalSpeed = 0,x,i,n,move,L,R,F_B,enable;
-byte controlByte;
+int turnSpeed = 255, globalSpeed = 0, move, L, R, F_B, enable, controlByte;
 double speedRatio = 1;
 
 #define MAX_MILLIS_TO_WAIT 1000
@@ -100,20 +98,20 @@ void loop(){
   }
   else
   {
-    controlByte = (byte)Serial.read();
-    turnSpeed = (int)Serial.read();
-    globalSpeed = (int)Serial.read();
+    controlByte = Serial.read();
+    turnSpeed = Serial.read();
+    globalSpeed = Serial.read();
     
-    Serial.write(controlByte, 1);
-    Serial.write((byte)turnSpeed, 1);
-    Serial.write((byte)globalSpeed, 1);
+    Serial.write(controlByte);
+    Serial.write(turnSpeed);
+    Serial.write(globalSpeed);
     
     
-    enable = bitRead(controlByte, 7);
-    move = bitRead(controlByte, 6);
-    F_B = bitRead(controlByte, 5);
-    L = bitRead(controlByte, 4);
-    R = bitRead(controlByte, 3);
+    enable = bitRead((int)controlByte, 7);
+    move = bitRead((int)controlByte, 6);
+    F_B = bitRead((int)controlByte, 5);
+    L = bitRead((int)controlByte, 4);
+    R = bitRead((int)controlByte, 3);
     
     if(move == 1) {
       if(F_B == 1) {
