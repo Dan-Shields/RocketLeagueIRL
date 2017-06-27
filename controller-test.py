@@ -6,7 +6,7 @@ joy = xbox.Joystick()
 
 ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
-enable = 1
+
 
 a = np.packbits([0, 1, 1, 1, 1, 1, 1, 1], axis=0)
 b = np.append(a, [255, 255])
@@ -14,6 +14,8 @@ b = np.append(a, [255, 255])
 data = bytearray(iter(b))
 ser.write(data)
 print "Sending handshake"
+
+enable = 1
 
 while not joy.Back():
     throttle = joy.rightTrigger()
@@ -27,6 +29,9 @@ while not joy.Back():
     turn_speed = 255 - int(abs(x_axis) * 255)
     L = int(x_axis < 0)
     R = int(x_axis > 0)
+
+    if not joy.B():
+        global_speed = int(global_speed / 2)
 
     a = np.packbits([enable, move, F_B, L, R], axis=0)
     b = np.append(a, [turn_speed, global_speed])
