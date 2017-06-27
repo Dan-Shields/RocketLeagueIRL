@@ -35,9 +35,11 @@ while True:
     x = 2
     #if (contours):
     for cnt in contours:#
-        x -= 1
+        x = x - 1
+        epsilon = 0.1*cv2.arclength(cnt, True)
+        approx = cv2.approxPolyDP(cnt,epsilon,TRUE)
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
-        x,y,w,h = cv2.boundingRect(cnt)
+        x,y,w,h = cv2.boundingRect(approx)
 
         center = None
 
@@ -63,7 +65,7 @@ while True:
         else:
             print "ball not found, turning " + lastDirection
             #ser.write(lastDirection)
-        if (x==0):
+        if (x == 0):
             x = 2
             break
 
