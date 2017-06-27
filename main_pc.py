@@ -35,7 +35,6 @@ while True:
     ret, thresh = cv2.threshold(blurred, 127, 255, 0)
     _, contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    print(contours)
 
 
     if (contours):
@@ -44,7 +43,6 @@ while True:
         #contours.remove(max(contours, key=cv2.contourArea))
         #cnt2 = max(contours, key=cv2.contourArea)
         cnt = getcontours(contours, 2)
-        print(cnt)
         epsilon1 = 0.01*cv2.arcLength(cnt[0], True)
         approx1 = cv2.approxPolyDP(cnt[0],epsilon1,True)
         #((x, y), radius) = cv2.minEnclosingCircle(cnt)
@@ -72,17 +70,19 @@ while True:
                 if (w1/h1 > w/h):
                     shape1 = "goal"
                     shape = "ball"
+                    print "Goal Height %d" %int(h1) + " Width %d" %int(w1) + " Ratio %d" %int(w1/h1) + "Ball Height %d" %int(h) + " Width %d" % int(w) + " Ratio: %d" %int(w/h)        
+
                 else:
                     shape1 = "ball"
                     shape = "goal"
+                    print "Goal Height %d" %int(h) + " Width %d" %int(w) + " Ratio %d" %int(w/h) + "Ball Height %d" %int(h1) + " Width %d" % int(w1) + " Ratio: %d" %int(w1/h1)
                 cv2.putText(img, shape, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 cv2.putText(img, shape1, (x1,y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2) 
             cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approx1],0,(0,255,0),2)
             
 
-                
-
+        
                   
 
 
