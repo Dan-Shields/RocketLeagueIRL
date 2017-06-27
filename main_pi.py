@@ -4,13 +4,11 @@ from picamera import PiCamera
 import time
 import cv2
 import numpy as np
-from collections import deque
 import serial
 
-#TODO: change address to a linux specific one
 ser = serial.Serial('/dev/ttyACM0', 9600)
 
-lastDirection = "4"
+lastDirectionLeft = True # 1= left, 0= right
 
 camera = PiCamera()
 camera.resolution = (640, 480)
@@ -19,6 +17,23 @@ camera.framerate = 32
 rawCapture = PiRGBArray(camera, size=(640, 480))
 
 time.sleep(0.1)
+
+
+def sendData(control_array, turn_speed_int):
+    controlInt = np.packbits(control_array, None)
+    ser.write(controlInt)
+    ser.write(turn_speed_int)
+
+def ballNotFound():
+    print "ball not found, turning left = " + lastDirectionLeft
+    left = lastDirectionLeft
+    right = not left
+    controls = np.array([1, headingForward, left, right, False, False, False, False], dtype=np.bool)
+    turnSpeed = 255
+
+    sendData(controls, turnSpeed)
+
+
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
     # Take each frame
@@ -40,36 +55,39 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     imgray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(imgray, 127, 255, 0)
     contours, _ = cv2.findContours(imgray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    ball_radius = 0
 
-    if (contours):
-    #for cnt in contours:
+    if contours:
+        # for cnt in contours:
         cnt = max(contours, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(cnt)
 
         center = None
-        
-        if (radius > 10):
-            cv2.circle(img, (int(x), int(y)), int(radius), [0, 0, 255], 2)
-            center = (int(x),int(y))
 
-            if (x < 220):
-                print "turning left"
-                lastDirection = "3"
-                ser.write('3')
-            elif (x > 420):
-                print "turning right"
-                lastDirection = "4"
-                ser.write('4')
-            else:
-                print "going straight"
-                ser.write('1')
-	else:
-	    print "ball not found, turning " + lastDirection
-	    ser.write(lastDirection)
+        if radius > 10:
+            #ball has been found
+
+            left = right = False
+            headingForward = move = True
+
+            turnSpeed = 0
+            if x < 320:
+                turnSpeed = int (x * (255/320))
+                left = True
+            elif x > 320:
+                turnSpeed = int ((x-320) * (255/320))
+                right = True
+
+            lastDirectionLeft = left
+
+            controls = np.array([move, headingForward, left, right, False, False, False,  False], dtype=np.bool)
+
+            sendData(controls, turnSpeed)
+
+        else:
+            ballNotFound()
+
     else:
-       	print "ball not found, turning " + lastDirection
-       	ser.write(lastDirection)
+        ballNotFound()
 
     rawCapture.truncate(0)
 
