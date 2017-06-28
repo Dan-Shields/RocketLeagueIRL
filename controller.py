@@ -17,7 +17,7 @@ def send_handshake():
     if SERIAL_ENABLED:
         print "Sending handshake"
         start_time = time.time()
-        ser.write([127])
+        ser.write('127')
 
         while True:
             if ser.inWaiting() > 0:
@@ -34,14 +34,16 @@ def stop_movement():
         send_data(control_array, 0, 0)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = "0.0.0.0"
+host = "192.168.1.114"
 port = 26656
 s.bind((host, port))
+
+SERIAL_ENABLED = 1
 
 ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
 send_handshake()
-print "Sending handshake"
+
 
 enable = 1
 
