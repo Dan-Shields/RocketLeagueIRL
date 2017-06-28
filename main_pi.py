@@ -171,11 +171,11 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
             
     if ball_found and goal_found:
-        if ballx > goalx and goalx < 50:
-            #turn left until > goal is > 50px from the left
+        if ballx > goalx and goalx < 70:
+            #turn left until > goal is > 70px from the left
             control_array = [enable, 1, 1, 1, 0]
             send_data(control_array, 128, 255)
-        elif ballx > goalx and goalx > 50:
+        elif ballx > goalx and goalx > 70:
             #move forward
             control_array = [enable, 1, 1, 0, 0]
             send_data(control_array, 0, 128)
