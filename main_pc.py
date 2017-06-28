@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from collections import deque
 import serial
+import time
+import sys
 
 def getcontours(contours, n):
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
@@ -20,12 +22,13 @@ def send_handshake():
     start_time = time.time()
     ser.write(127)
     while True:
-        if ser.inWaiting() and ser.read() == 127:
+        if ser.inWaiting():
+            print ser.read()
             break
-        else if time.time() - start_time > 1:
+        elif time.time() - start_time > 1:
             sys.exit("Handshake failed or connection was lost")
 
-ser = serial.Serial('COM3', 9600, timeout=0.050, bytesize=8)
+ser = serial.Serial('COM8', 9600, timeout=0.050, bytesize=8)
 
 send_handshake()
 
@@ -35,9 +38,6 @@ cap = cv2.VideoCapture(0)
 
 IMG_WIDTH = 640
 IMG_HEIGHT = 480
-
-cap.set(CV_CAP_PROP_FRAME_WIDTH,IMG_WIDTH);
-cap.set(CV_CAP_PROP_FRAME_HEIGHT,IMG_HEIGHT);
 
 pts = deque(maxlen=64)
 while True:
@@ -156,10 +156,10 @@ while True:
             cv2.drawContours(img,[approx1],0,(0,255,0),2)
 
     if ball_found and goal_found:
-        if ballx > goalx and goalx > IMG_WIDTH - 50:
+        if ballx > goalx and goalx > (IMG_WIDTH - 50):
             control_array = [enable, 1, 1, 0, 1]
             send_data(control_array, 128, 255)
-        else if ballx > goalx and goalx < IMG_WIDTH - 50
+        elif ballx > goalx and goalx < (IMG_WIDTH - 50):
             control_array = [enable, 1, 1, 0, 0]
             send_data(control_array, 0, 128)
     else:
