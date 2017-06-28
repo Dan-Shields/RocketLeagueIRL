@@ -8,6 +8,8 @@ host = socket.gethostname()
 port = 26656
 s.bind((host, port))
 
+print "Listening on address " + host
+
 s.listen(5)
 while True:
   c, addr = s.accept()
