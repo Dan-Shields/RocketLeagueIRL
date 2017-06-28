@@ -17,13 +17,13 @@ def send_handshake():
     if SERIAL_ENABLED:
         print "Sending handshake"
         start_time = time.time()
-        ser.write('127')
+        ser.write(bytearray([127]))
 
         while True:
             if ser.inWaiting() > 0:
                 print "Handshake returned"
+		break
             elif time.time() - start_time > 1:
-                break
                 sys.exit("Handshake failed or connection was lost")
     else:
         print "Serial disabled"
