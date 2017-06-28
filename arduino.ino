@@ -89,21 +89,24 @@ void loop(){
   if (!connectionActive && Serial.available()) {
     if (Serial.read() == 127) {
       // acknowledge handshake...
+      connectionActive = true; 
       Serial.write(127);
-      connectionActive = true;
     } else {
-      // ... or flush buffer
+      // ...or flush
       while(Serial.available()){Serial.read();}
     }
+    
   } else if (connectionActive) {
 
     while ((Serial.available()<3) && ((millis() - starttime) < MAX_MILLIS_TO_WAIT)) {} // wait for data/timeout
     
     if(Serial.available() < 3)
     {
-      // connection lost - request reconnect
-      Serial.write(63)
-      connectionActive = false;      
+      // connection lost - request reconnect and stay put
+      Serial.write(63);
+      connectionActive = false;
+      while(Serial.available()){Serial.read();}
+      stationary();
     }
     else
     {

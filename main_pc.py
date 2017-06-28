@@ -20,15 +20,20 @@ def send_data(control_array, turn_speed_int, global_speed_int):
 def send_handshake():
     print "Sending handshake"
     start_time = time.time()
-    ser.write(127)
+    ser.write([127])
+
     while True:
-        if ser.inWaiting():
-            print ser.read()
+        if ser.inWaiting() > 0:
+            print "Handshake returned"
             break
         elif time.time() - start_time > 1:
             sys.exit("Handshake failed or connection was lost")
 
-ser = serial.Serial('COM8', 9600, timeout=0.050, bytesize=8)
+def stop_movement():
+    control_array = [enable, 0, 1, 0, 1]
+    send_data(control_array, 0, 0)
+
+ser = serial.Serial('COM3', 9600, timeout=0.050, bytesize=8)
 
 send_handshake()
 
@@ -156,16 +161,20 @@ while True:
             cv2.drawContours(img,[approx1],0,(0,255,0),2)
 
     if ball_found and goal_found:
-        if ballx > goalx and goalx > (IMG_WIDTH - 50):
-            control_array = [enable, 1, 1, 0, 1]
+        if ballx > goalx and goalx < 50:
+            #turn left until > goal is > 50px from the left
+            control_array = [enable, 1, 1, 1, 0]
             send_data(control_array, 128, 255)
-        elif ballx > goalx and goalx < (IMG_WIDTH - 50):
+        elif ballx > goalx and goalx > 50:
+            #move forward
             control_array = [enable, 1, 1, 0, 0]
             send_data(control_array, 0, 128)
+        else:
+            # always send a command to not move to keep-alive connection
+            stop_movement()
+
     else:
-        # always send a command to not move to keep-alive connection
-        control_array = [enable, 0, 1, 0, 1]
-        send_data(control_array, 0, 0)
+        stop_movement()
 
 
 
