@@ -1,23 +1,34 @@
 #!/usr/bin/env python
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+import urllib2
 import time
 import cv2
 import numpy as np
 from collections import deque
 import serial
 
+def fetch_img():
+    # download the image, convert it to a NumPy array, and then read
+    # it into OpenCV format
+    fetch_start_time = time.time()
+    resp = urllib2.urlopen("http://192.168.1.114/html/cam_pic.php")
+    image = np.asarray(bytearray(resp.read()), dtype="uint8")
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+    #print time.time() - fetch_start_time
+
+    # return the image
+    return image
+
 def getcontours(allContours, n):
     contours = sorted(allContours, key=cv2.contourArea, reverse=True)
     return contours[:n]
 
 def video(hsv,mask,img):
-    return
     #cv2.imshow('hsv', hsv)
     #cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
-    #cv2.imshow('img', img)
+    cv2.imshow('img', img)
+    return
 
 def send_data(control_array, turn_speed_int, global_speed_int):
     if SERIAL_ENABLED:
@@ -50,7 +61,7 @@ def stop_movement():
 IMG_HEIGHT = 240
 IMG_WIDTH = 320
 
-SERIAL_ENABLED = True
+SERIAL_ENABLED = False
 
 enable = 1
 
@@ -59,16 +70,11 @@ if SERIAL_ENABLED:
 
 send_handshake()
 
-camera = PiCamera()
-camera.resolution = (IMG_WIDTH, IMG_HEIGHT)
-camera.framerate = 32
-rawCapture = PiRGBArray(camera, size=(IMG_WIDTH, IMG_HEIGHT))
-
 h = 18
 s = 60
 v = 150
 
-for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+while True:
     #v = raw_input("input")
 
     if SERIAL_ENABLED and ser.inWaiting() and ser.read == 63:
@@ -81,13 +87,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     ballx = -1
     ball_width = -1  
 
-    img = frame.array
-    img = cv2.flip(img, 0)
-    img = cv2.flip(img, 5)
+    img = fetch_img()
     #blurred = cv2.GaussianBlur(img, (11, 11),0)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     
-
     lower_color = np.array([h, s, v], dtype=np.uint8)
     upper_color = np.array([35, 255, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv, lower_color, upper_color)
@@ -100,9 +103,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     #thresh = cv2.adaptiveThreshold(blur,255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 2)
     #ret, thresh = cv2.threshold(blur, 50, 255, 0)
     
-    allContours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, allContours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if (allContours):
+        print "here"
         h2 = 1
         w1 = 1
         w2 = 1
@@ -124,7 +128,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 ball_found = True
 
                 if ((w2 > 4 or h2 > 4) and h1 > 0 and w1 > 0):
-                    rawCapture.truncate(0)#box2 = cv2.boxPoints(cv2.minAreaRect(approxPoly2))
                     #box2 = np.int0(box2)
                     #cv2.drawContours(img, [box2],0,(255,255,0),2)
                     cv2.drawContours(img,[approxPoly2], 0,(255,0,0), 1)
@@ -172,7 +175,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             #cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
 
-    print goalx
+    #print goalx
     if ball_found and goal_found:
         if ballx > goalx and goalx < 70:
             #go straight until goalx from the left
@@ -192,8 +195,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         stop_movement()
 
     video(hsv, mask,img)
-    
-    rawCapture.truncate(0)
 
     k = cv2.waitKey(3) & 0xFF
     if k == 27:
