@@ -11,11 +11,6 @@ def getcontours(contours, n):
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     return contours[:n]
 
-#TODO: change address to a linux specific one
-#ser = serial.Serial('/dev/ttyACM0', 9600)
-
-lastDirection = "5"
-
 camera = PiCamera()
 camera.resolution = (320, 240)
 camera.framerate = 32
@@ -37,7 +32,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     lower_color = np.array([20, 100, 100], dtype=np.uint8)
     upper_color = np.array([75, 255, 255], dtype=np.uint8)
 
-    # Threshold the HSV image to get only blue colors
+    # Threshold the HSV image to get only yellow colors
     mask = cv2.inRange(hsv, lower_color, upper_color)
     # Bitwise-AND mask and original image
     res = cv2.bitwise_and(img, img, mask=mask)
@@ -79,27 +74,26 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                     shape = "ball"
                     shape1 = "goal"
                     print "Goal Height %d" %int(h) + " Width %d" %int(w) + " Ratio %d" %int(w/h) + "Ball Height %d" %int(h1) + " Width %d" % int(w1) + " Ratio: %d" %int(w1/h1)
-                cv2.putText(img, shape, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-                cv2.putText(img, shape1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2) 
+                #cv2.putText(img, shape, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+                #cv2.putText(img, shape1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2) 
             else:
                 if ((w/h > 5 or h/w > 5) or len(approx1) < 7):
                     shape = "goal"
                 else:
                     shape = "ball"
-                cv2.putText(img, shape, (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
+                #cv2.putText(img, shape, (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
                 #cv2.drawContours(img,[box1],0,(0,0,255),2)
                 #cv2.drawContours(img,[approx1],0,(0,255,0),2)
 
     #cv2.imshow('hsv', hsv)
-    cv2.imshow('mask', mask)
+    #cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
-    cv2.imshow('img', img)
+    #cv2.imshow('img', img)
 
     rawCapture.truncate(0)
 
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
-ser.write('0')
 cv2.destroyAllWindows()
