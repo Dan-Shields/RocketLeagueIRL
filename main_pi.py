@@ -7,8 +7,8 @@ import numpy as np
 from collections import deque
 import serial
 
-def getcontours(contours, n):
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+def getcontours(allContours, n):
+    contours = sorted(allContours, key=cv2.contourArea, reverse=True)
     return contours[:n]
 
 camera = PiCamera()
@@ -36,15 +36,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     
     allContours, _ = cv2.findContours(imgray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    if (contours):
-        selectedContours = getcontours(contours, 2)
+    if (allContours):
+        h2 = 1
+        w1 = 1
+        selectedContours = getcontours(allContours, 2)
         approxFactor1 = 0.01*cv2.arcLength(selectedContours[0], True)
-        approxPoly1 = cv2.approxPolyDP(cnt[0],approxFactor1,True)
+        approxPoly1 = cv2.approxPolyDP(selectedContours[0],approxFactor1,True)
         (x1,y1),(w1,h1),_ = cv2.minAreaRect(approxPoly1)
-        
+         
         if (len(selectedContours) > 1):
             approxFactor2 = 0.01*cv2.arcLength(selectedContours[1], True)
-            approxPoly2 = cv2.approxPolyDP(selectedContours[1],epsilon2,True)
+            approxPoly2 = cv2.approxPolyDP(selectedContours[1],approxFactor2,True)
             (x2,y2),(w2,h2),_ = cv2.minAreaRect(approxPoly2)
         
         if (w1 > 5):
@@ -66,8 +68,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                     object1 = "ball"
                     object2 = "goal"
                     #print "Goal Height %d" %int(h1) + " Width %d" %int(w1) + " Ratio %d" %int(w1/h1) + "Ball Height %d" %int(h2) + " Width %d" % int(w2) + " Ratio: %d" %int(w2/h2)
-                #cv2.putText(img, shape, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-                #cv2.putText(img, shape1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+                cv2.putText(img, object1, (int(x1), int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+                cv2.putText(img, object2, (int(x2),int(y2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
                 
             else:
                 if ((w1/h1 > 5 or h1/w1 > 5) or len(approxPoly1) < 7):
@@ -75,7 +77,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                     
                 else:
                     object1 = "ball"
-                #cv2.putText(img, shape, (int(x),int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
+                cv2.putText(img, object1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
                 #cv2.drawContours(img,[box1],0,(0,0,255),2)
                 #cv2.drawContours(img,[approx1],0,(0,255,0),2)
 
@@ -83,7 +85,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     #cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
-    #cv2.imshow('img', img)
+    cv2.imshow('img', img)
 
     rawCapture.truncate(0)
 
