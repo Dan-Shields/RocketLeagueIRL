@@ -12,11 +12,13 @@ def getcontours(allContours, n):
     return contours[:n]
 
 def video(hsv,mask,img):
+    return
     #cv2.imshow('hsv', hsv)
-    cv2.imshow('mask', mask)
+    #cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
-    cv2.imshow('img', img)
+    #cv2.imshow('img', img)
+
 def send_data(control_array, turn_speed_int, global_speed_int):
     if SERIAL_ENABLED:
         a = np.packbits(control_array, axis=0)
@@ -48,14 +50,14 @@ def stop_movement():
 IMG_HEIGHT = 240
 IMG_WIDTH = 320
 
-SERIAL_ENABLED = False
+SERIAL_ENABLED = True
 
 enable = 1
 
-send_handshake()
-
 if SERIAL_ENABLED:
-    ser = serial.Serial('/dev/tty/AMC0', 9600, timeout=0.050, bytesize=8)
+    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
+
+send_handshake()
 
 camera = PiCamera()
 camera.resolution = (IMG_WIDTH, IMG_HEIGHT)
@@ -75,7 +77,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             
     goal_found = False
     ball_found = False
-  
+    goalx = -1
+    ballx = -1
+    ball_width = -1  
+
     img = frame.array
     img = cv2.flip(img, 0)
     img = cv2.flip(img, 5)
@@ -101,6 +106,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         h2 = 1
         w1 = 1
         w2 = 1
+
         selectedContours = getcontours(allContours, 2)
         approxFactor1 = 0.01*cv2.arcLength(selectedContours[0], True)
         approxPoly1 = cv2.approxPolyDP(selectedContours[0],approxFactor1,True)
@@ -108,10 +114,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if (w1 > 4 or h1 > 4):
             #box1 = cv2.boxPoints(cv2.minAreaRect(approxPoly1))
             #box1 = np.int0(box1)
-
-            goalx = 0
-            ball_width = 0
-            ballx = 0
 
             if (len(selectedContours) > 1):
                 approxFactor2 = 0.01*cv2.arcLength(selectedContours[1], True)
@@ -169,16 +171,19 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 cv2.putText(img, object1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
             #cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
-            
+
+    print goalx
     if ball_found and goal_found:
         if ballx > goalx and goalx < 70:
-            #turn left until > goal is > 70px from the left
-            control_array = [enable, 1, 1, 1, 0]
-            send_data(control_array, 128, 255)
+            #go straight until goalx from the left
+	    ball_goal_diff = ballx - goalx
+            if ball_goal_diff >= 20 or ball_goal_diff <= -20:
+                control_array = [enable, 1, 1, 0, 0]
+                send_data(control_array, 128, 255)
         elif ballx > goalx and goalx > 70:
             #move forward
-            control_array = [enable, 1, 1, 0, 0]
-            send_data(control_array, 0, 128)
+            control_array = [enable, 1, 1, 0, 1]
+            send_data(control_array, 127, 127)
         else:
             # always send a command to not move to keep-alive connection
             stop_movement()
