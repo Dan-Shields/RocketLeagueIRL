@@ -12,36 +12,44 @@ def getcontours(allContours, n):
     return contours[:n]
 
 def send_data(control_array, turn_speed_int, global_speed_int):
-    a = np.packbits(control_array, axis=0)
-    b = np.append(a, [turn_speed_int, global_speed_int])
-    data = bytearray(iter(b))
+    if SERIAL_ENABLED:
+        a = np.packbits(control_array, axis=0)
+        b = np.append(a, [turn_speed_int, global_speed_int])
+        data = bytearray(iter(b))
 
-    ser.write(data)
+        ser.write(data)
 
 def send_handshake():
-    print "Sending handshake"
-    start_time = time.time()
-    ser.write([127])
+    if SERIAL_ENABLED:
+        print "Sending handshake"
+        start_time = time.time()
+        ser.write([127])
 
-    while True:
-        if ser.inWaiting() > 0:
-            print "Handshake returned"
-        elif time.time() - start_time > 1:
-            break
-            sys.exit("Handshake failed or connection was lost")
+        while True:
+            if ser.inWaiting() > 0:
+                print "Handshake returned"
+            elif time.time() - start_time > 1:
+                break
+                sys.exit("Handshake failed or connection was lost")
+    else:
+        print "Serial disabled"
 
 def stop_movement():
-    control_array = [1, 0, 1, 0, 1]
-    send_data(control_array, 0, 0)
+    if SERIAL_ENABLED:
+        control_array = [1, 0, 1, 0, 1]
+        send_data(control_array, 0, 0)
 
 IMG_HEIGHT = 240
 IMG_WIDTH = 320
+
+SERIAL_ENABLED = False
 
 enable = 1
 
 send_handshake()
 
-ser = serial.Serial('COM3', 9600, timeout=0.050, bytesize=8)
+if SERIAL_ENABLED:
+    ser = serial.Serial('/dev/tty/AMC0', 9600, timeout=0.050, bytesize=8)
 
 camera = PiCamera()
 camera.resolution = (IMG_WIDTH, IMG_HEIGHT)
