@@ -71,7 +71,7 @@ v = 150
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     #v = raw_input("input")
 
-    if ser.inWaiting() and ser.read == 63:
+    if SERIAL_ENABLED and ser.inWaiting() and ser.read == 63:
         # reconnect was requested
         send_handshake()
             
