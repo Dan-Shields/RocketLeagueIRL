@@ -13,7 +13,7 @@ def fetch_img():
     resp = urllib2.urlopen("http://192.168.1.114/html/cam_pic.php")
     image = np.asarray(bytearray(resp.read()), dtype="uint8")
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-    #print time.time() - fetch_start_time
+    print time.time() - fetch_start_time
 
     # return the image
     return image
@@ -23,8 +23,8 @@ def getcontours(allContours, n):
     return contours[:n]
 
 def video(hsv,mask,img):
-    #cv2.imshow('hsv', hsv)
-    #cv2.imshow('mask', mask)
+    cv2.imshow('hsv', hsv)
+    cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
     cv2.imshow('img', img)
@@ -72,7 +72,7 @@ send_handshake()
 
 h = 18
 s = 60
-v = 150
+v = 35
 
 while True:
     #v = raw_input("input")
@@ -88,25 +88,26 @@ while True:
     ball_width = -1  
 
     img = fetch_img()
-    #blurred = cv2.GaussianBlur(img, (11, 11),0)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    blurred = cv2.GaussianBlur(img, (11, 11),0)
+    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
     lower_color = np.array([h, s, v], dtype=np.uint8)
-    upper_color = np.array([35, 255, 255], dtype=np.uint8)
+    upper_color = np.array([75, 255, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv, lower_color, upper_color)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
+    #dst = cv2.fastNlMeansDenoising(mask, None, 7, 21, 9)
     #res = cv2.bitwise_and(img, img, mask=mask)
     
     #imgray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-    #blur = cv2.medianBlur(mask,5)
+    blur = cv2.medianBlur(mask,5)
     #thresh = cv2.adaptiveThreshold(blur,255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 2)
     #ret, thresh = cv2.threshold(blur, 50, 255, 0)
     
-    _, allContours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, allContours, _ = cv2.findContours(blur, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if (allContours):
-        print "here"
+        #print "here"
         h2 = 1
         w1 = 1
         w2 = 1
@@ -115,7 +116,7 @@ while True:
         approxFactor1 = 0.01*cv2.arcLength(selectedContours[0], True)
         approxPoly1 = cv2.approxPolyDP(selectedContours[0],approxFactor1,True)
         (x1,y1),(w1,h1),_ = cv2.minAreaRect(approxPoly1)
-        if (w1 > 4 or h1 > 4):
+        if (w1 > 20 or h1 > 20):
             #box1 = cv2.boxPoints(cv2.minAreaRect(approxPoly1))
             #box1 = np.int0(box1)
 
@@ -127,7 +128,7 @@ while True:
                 goal_found = True
                 ball_found = True
 
-                if ((w2 > 4 or h2 > 4) and h1 > 0 and w1 > 0):
+                if ((w2 > 20 or h2 > 20) and h1 > 0 and w1 > 0):
                     #box2 = np.int0(box2)
                     #cv2.drawContours(img, [box2],0,(255,255,0),2)
                     cv2.drawContours(img,[approxPoly2], 0,(255,0,0), 1)
