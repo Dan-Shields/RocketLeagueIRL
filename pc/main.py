@@ -31,6 +31,8 @@ def video(hsv,mask,img):
     cv2.imshow('img', img)
     return
 
+counter = 0
+
 h = 18
 s = 60
 v = 35
@@ -52,7 +54,7 @@ while True:
     ball_width = -1  
 
     img = fetch_img()
-
+    IMG_HEIGHT, IMG_WIDTH, _ = img.shape
     blurred = cv2.GaussianBlur(img, (11, 11),0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
@@ -140,11 +142,36 @@ while True:
                 cv2.putText(img, object1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
             #cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
+    
+    #print goalx
+    center = IMG_WIDTH/2
+    tolerance  = 0.1*IMG_WIDTH
 
+    if (counter == 0):                                  #Step 1: Turn till the ball is found
+        control_array = [enable, 1, 1 ,1 ,0]            #rt(-255 to 255), lt(-255 to 255), x(-1,1)
+        send_data(control_array, 127,127)
+    if (ball_found and (counter == 0)):
+        counter = 1
+    if ball_found and (counter == 1):                   #Step 2: Go towards the ball
+        if ((center - tolerance) < ballx and (center + tolerance) > ballx):
+            send_data("forward")
+        elif ((center + tolerance) < ballx):
+            send_data( "slightly right")
+            lastDirection = "full right"
+        elif ((center-tolerance) > ballx:
+            send_data( "slightly left")
+            lastDirection = "full left"
+    elif (counter ==1):
+        send_data(lastDirection)                        
+    if ball_width >= center:                             #Step 3: Stop when close to the ball
+        counter = 2
+        stop_movement()
+    
     MESSAGE = "test"
 
     s.send(MESSAGE)
     data = s.recv(BUFFER_SIZE)
+
 
     video(hsv, mask,img)
 
