@@ -34,9 +34,9 @@ def stop_movement():
         send_data(control_array, 0, 0)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = "192.168.1.114"
-port = 26656
-s.bind((host, port))
+TCP_IP = "192.168.1.114"
+TCP_PORT = 26656
+s.bind((TCP_IP, TCP_PORT))
 
 SERIAL_ENABLED = 1
 
@@ -44,10 +44,9 @@ ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
 send_handshake()
 
-
 enable = 1
 
-print "Listening on address " + host
+print "Listening on address " + TCP_IP
 
 s.listen(1)
 
@@ -56,6 +55,10 @@ print 'Connection address: ', addr
 last_activity = time.time()
 
 while True:
+    if SERIAL_ENABLED and ser.inWaiting() and ser.read == 63:
+        # reconnect was requested
+        send_handshake()
+
     data = conn.recv(1024)
     if not data and time.time() - last_activity > 1: break
     print "received data: ", data
@@ -79,9 +82,6 @@ while True:
     if F_B == 0 and (L == 1 or R == 1):
         L = int(not bool(L))
         R = int(not bool(R))
-
-    if not joy['b']:
-        global_speed = int(global_speed / 2)
 
     send_data([enable, move, F_B, L, R], turn_speed, global_speed)
 

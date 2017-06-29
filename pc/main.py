@@ -5,6 +5,8 @@ import cv2
 import numpy as np
 from collections import deque
 import serial
+import socket
+import simplejson as json
 
 def fetch_img():
     # download the image, convert it to a NumPy array, and then read
@@ -15,7 +17,6 @@ def fetch_img():
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
     print time.time() - fetch_start_time
 
-    # return the image
     return image
 
 def getcontours(allContours, n):
@@ -30,56 +31,19 @@ def video(hsv,mask,img):
     cv2.imshow('img', img)
     return
 
-def send_data(control_array, turn_speed_int, global_speed_int):
-    if SERIAL_ENABLED:
-        a = np.packbits(control_array, axis=0)
-        b = np.append(a, [turn_speed_int, global_speed_int])
-        data = bytearray(iter(b))
-
-        ser.write(data)
-
-def send_handshake():
-    if SERIAL_ENABLED:
-        print "Sending handshake"
-        start_time = time.time()
-        ser.write(bytearray([127]))
-
-        while True:
-            if ser.inWaiting() > 0:
-                print "Handshake returned"
-                break
-            elif time.time() - start_time > 1:
-                sys.exit("Handshake failed or connection was lost")
-    else:
-        print "Serial disabled"
-
-def stop_movement():
-    if SERIAL_ENABLED:
-        control_array = [1, 0, 1, 0, 1]
-        send_data(control_array, 0, 0)
-
-IMG_HEIGHT = 240
-IMG_WIDTH = 320
-
-SERIAL_ENABLED = False
-
-enable = 1
-
-if SERIAL_ENABLED:
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
-
-send_handshake()
-
 h = 18
 s = 60
 v = 35
 
+TCP_IP = '192.168.1.114'
+TCP_PORT = 26656
+BUFFER_SIZE = 1024
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((TCP_IP, TCP_PORT))
+
 while True:
     #v = raw_input("input")
-
-    if SERIAL_ENABLED and ser.inWaiting() and ser.read == 63:
-        # reconnect was requested
-        send_handshake()
             
     goal_found = False
     ball_found = False
@@ -88,6 +52,7 @@ while True:
     ball_width = -1  
 
     img = fetch_img()
+
     blurred = cv2.GaussianBlur(img, (11, 11),0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
@@ -176,24 +141,10 @@ while True:
             #cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
 
-    #print goalx
-    if ball_found and goal_found:
-        if ballx > goalx and goalx < 70:
-            #go straight until goalx from the left
-	    ball_goal_diff = ballx - goalx
-            if ball_goal_diff >= 20 or ball_goal_diff <= -20:
-                control_array = [enable, 1, 1, 0, 0]
-                send_data(control_array, 128, 255)
-        elif ballx > goalx and goalx > 70:
-            #move forward
-            control_array = [enable, 1, 1, 0, 1]
-            send_data(control_array, 127, 127)
-        else:
-            # always send a command to not move to keep-alive connection
-            stop_movement()
+    MESSAGE = "test"
 
-    else:
-        stop_movement()
+    s.send(MESSAGE)
+    data = s.recv(BUFFER_SIZE)
 
     video(hsv, mask,img)
 
