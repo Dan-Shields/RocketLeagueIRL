@@ -24,7 +24,7 @@ def getcontours(allContours, n):
     return contours[:n]
 
 def video(hsv,mask,img):
-    cv2.imshow('hsv', hsv)
+    #cv2.imshow('hsv', hsv)
     cv2.imshow('mask', mask)
     #cv2.imshow('res', res)
     #cv2.imshow('imgray', imgray)
@@ -46,7 +46,7 @@ s.connect((TCP_IP, TCP_PORT))
 
 while True:
     #v = raw_input("input")
-            
+
     goal_found = False
     ball_found = False
     goalx = -1
@@ -143,35 +143,46 @@ while True:
             #cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
     
-    #print goalx
     center = IMG_WIDTH/2
     tolerance  = 0.1*IMG_WIDTH
 
-    if (counter == 0):                                  #Step 1: Turn till the ball is found
-        control_array = [enable, 1, 1 ,1 ,0]            #rt(-255 to 255), lt(-255 to 255), x(-1,1)
-        send_data(control_array, 127,127)
+    rt = 0
+    lt = 0
+    x = 0
+
+    if (counter == 0): #Step 1: Turn till the ball is found
+        x = -1.0
+        rt = 0.5
     if (ball_found and (counter == 0)):
         counter = 1
-    if ball_found and (counter == 1):                   #Step 2: Go towards the ball
+    if ball_found and (counter == 1): #Step 2: Go towards the ball
         if ((center - tolerance) < ballx and (center + tolerance) > ballx):
-            send_data("forward")
+            x = 0.0
+            rt = 0.8
         elif ((center + tolerance) < ballx):
-            send_data( "slightly right")
+            x = 0.5
+            rt = 1
             lastDirection = "full right"
         elif ((center-tolerance) > ballx:
-            send_data( "slightly left")
+            x = -0.5
+            rt = 1.0
             lastDirection = "full left"
     elif (counter ==1):
-        send_data(lastDirection)                        
-    if ball_width >= center:                             #Step 3: Stop when close to the ball
+        if lastDirection == "full left":
+            x = -1.0
+            rt = 0.5
+        elif lastDirection == "full right":
+            x = 1.0
+            rt = 0.5
+    if ball_width >= center: #Step 3: Stop when close to the ball
         counter = 2
-        stop_movement()
+        rt = 0
     
-    MESSAGE = "test"
+    MESSAGE = "{'rt':" + str(rt) + ", 'lt':0.0, 'x':" + str(x) + ", 'b':false}"
 
     s.send(MESSAGE)
-    data = s.recv(BUFFER_SIZE)
-
+    data = s.recv(1024)
+    print data
 
     video(hsv, mask,img)
 
