@@ -32,17 +32,17 @@ def video(hsv,mask,img):
     return
 
 counter = 0
-
+lastDirection = "full right"
 h = 18
-s = 60
-v = 35
+s = 100
+v = 100
 
 TCP_IP = '192.168.1.114'
 TCP_PORT = 26656
 BUFFER_SIZE = 1024
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((TCP_IP, TCP_PORT))
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((TCP_IP, TCP_PORT))
 
 while True:
     #v = raw_input("input")
@@ -59,7 +59,7 @@ while True:
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
     lower_color = np.array([h, s, v], dtype=np.uint8)
-    upper_color = np.array([75, 255, 255], dtype=np.uint8)
+    upper_color = np.array([40, 255, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv, lower_color, upper_color)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
@@ -163,7 +163,7 @@ while True:
             x = 0.5
             rt = 1
             lastDirection = "full right"
-        elif ((center-tolerance) > ballx:
+        elif center-tolerance > ballx:
             x = -0.5
             rt = 1.0
             lastDirection = "full left"
@@ -176,12 +176,13 @@ while True:
             rt = 0.5
     if ball_width >= center: #Step 3: Stop when close to the ball
         counter = 2
-        rt = 0
+        rt = 0.0
     
-    MESSAGE = "{'rt':" + str(rt) + ", 'lt':0.0, 'x':" + str(x) + ", 'b':false}"
+    obj = {'rt': rt, 'lt': 0.0, 'x': x}
+    MESSAGE = json.dumps(obj, separators=(',', ':'), sort_keys=True)
 
-    s.send(MESSAGE)
-    data = s.recv(1024)
+    sock.send(MESSAGE)
+    data = sock.recv(1024)
     print data
 
     video(hsv, mask,img)
