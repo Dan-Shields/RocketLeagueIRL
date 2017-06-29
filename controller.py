@@ -1,26 +1,72 @@
 #!/usr/bin/env python
 import numpy as np
 import serial
-import xbox
-joy = xbox.Joystick()
+import socket
+import simplejson as json
+import time
+
+def send_data(control_array, turn_speed_int, global_speed_int):
+    if SERIAL_ENABLED:
+        a = np.packbits(control_array, axis=0)
+        b = np.append(a, [turn_speed_int, global_speed_int])
+        data = bytearray(iter(b))
+
+        ser.write(data)
+
+def send_handshake():
+    if SERIAL_ENABLED:
+        print "Sending handshake"
+        start_time = time.time()
+        ser.write(bytearray([127]))
+
+        while True:
+            if ser.inWaiting() > 0:
+                print "Handshake returned"
+		break
+            elif time.time() - start_time > 1:
+                sys.exit("Handshake failed or connection was lost")
+    else:
+        print "Serial disabled"
+
+def stop_movement():
+    if SERIAL_ENABLED:
+        control_array = [1, 0, 1, 0, 1]
+        send_data(control_array, 0, 0)
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+host = "192.168.1.114"
+port = 26656
+s.bind((host, port))
+
+SERIAL_ENABLED = 1
 
 ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
 
+send_handshake()
 
-
-a = np.packbits([0, 1, 1, 1, 1, 1, 1, 1], axis=0)
-b = np.append(a, [255, 255])
-
-data = bytearray(iter(b))
-ser.write(data)
-print "Sending handshake"
 
 enable = 1
 
-while not joy.Back():
-    throttle = joy.rightTrigger()
-    brake = joy.leftTrigger()
-    x_axis = joy.leftX()
+print "Listening on address " + host
+
+s.listen(1)
+
+conn, addr = s.accept()
+print 'Connection address: ', addr
+last_activity = time.time()
+
+while True:
+    data = conn.recv(1024)
+    if not data and time.time() - last_activity > 1: break
+    print "received data: ", data
+    last_activity = time.time()
+    conn.send(data)
+    
+    joy = json.loads(data)
+
+    throttle = joy['rt']
+    brake = joy['lt']
+    x_axis = joy['x']
 
     global_speed = int(abs(throttle - brake) * 255)
     move = int(global_speed > 20)
@@ -34,31 +80,18 @@ while not joy.Back():
         L = int(not bool(L))
         R = int(not bool(R))
 
-    if not joy.B():
+    if not joy['b']:
         global_speed = int(global_speed / 2)
 
-    a = np.packbits([enable, move, F_B, L, R], axis=0)
-    b = np.append(a, [turn_speed, global_speed])
+    send_data([enable, move, F_B, L, R], turn_speed, global_speed)
 
-    data = bytearray(iter(b))
 
     if move == 1 and F_B == 1:
         print "Moving forwards"
     elif move == 1 and F_B == 0:
         print "Moving backwards"
 
-    #write data if previous data was received
-    if ser.inWaiting() > 0:
-        print "Wrote data"
-        ser.write(data)
-        ser.read()
-
-a = np.packbits([0], axis=0)
-b = np.append(a, [0, 0])
-
-data = bytearray(iter(b))
-
-ser.write(data)
+stop_movement()
 
 ser.close()
-joy.close()
+conn.close()
