@@ -156,7 +156,7 @@ while True:
     if (ball_found and (counter == 0)):
         counter = 1
     if ball_found and (counter == 1): #Step 2: Go towards the ball
-        if ((center - tolerance) < ballx and (center + tolerance) > ballx):
+        if ((center - tolerance) < ballx and (center+tolerance) > ballx):
             x = 0.0
             rt = 0.8
         elif ((center + tolerance) < ballx):
@@ -174,9 +174,43 @@ while True:
         elif lastDirection == "full right":
             x = 1.0
             rt = 0.5
-    if ball_width >= center: #Step 3: Stop when close to the ball
+    if ball_width >= center - tolerance: #Step 3: Stop when close to the ball
         counter = 2
         rt = 0.0
+    if counter == 2:
+        x = -1.0
+        rt = 0.5
+    if goal_found and counter ==2:
+        counter = 3
+    if goal_found and counter == 3:
+        if ((center-tolerance) < goalx and (center+tolerance) > goalx):
+            x = 0
+            lt = 0.8
+            rt = 0
+        elif (center+tolerance) < goalx:
+            x = -0.5
+            lt = 1
+            rt = 0
+            lastDirection = "back left"
+        elif (center-tolerance) > goalx:
+            x = 0.5
+            lt = 1
+            rt = 0
+            lastDirection = "back right"
+    elif counter == 3:
+        if lastDirection == "back right":
+            x = 1
+            lt = 0.5
+            rt = 0
+        elif lastDirection == "back left"
+            x = -1
+            lt = 0.5
+            rt = 0
+    if ball_found and goal_found and counter == 3:
+        counter = 4
+        rt = 0
+        lt = 0
+
     
     obj = {'rt': rt, 'lt': 0.0, 'x': x}
     MESSAGE = json.dumps(obj, separators=(',', ':'), sort_keys=True)
