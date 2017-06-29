@@ -6,6 +6,7 @@ const int enableRight = 10;
 const int enableLeft = 9;
 int turnSpeed = 255, globalSpeed = 0, move, L, R, F_B, enable, controlByte;
 double speedRatio = 1;
+bool connectionActive = false;
 
 #define MAX_MILLIS_TO_WAIT 1000
 unsigned long starttime;
@@ -85,71 +86,82 @@ void setup()
 void loop(){
   starttime = millis();
   
-  while ( (Serial.available()<3) && ((millis() - starttime) < MAX_MILLIS_TO_WAIT) )
-  {
-    // hang in this loop until we either get 3 bytes of data or 1 second
-    // has gone by
-  }
-  if(Serial.available() < 3)
-  {
-    // the data didn't come in - handle that problem here
-    //Serial.println("ERROR - Didn't get 9 bytes of data!");
-    while(Serial.available()){Serial.read();}
-  }
-  else
-  {
-    controlByte = Serial.read();
-    turnSpeed = Serial.read();
-    globalSpeed = Serial.read();
-    
-    Serial.write(128);
-    
-    
-    enable = bitRead(controlByte, 7);
-    move = bitRead(controlByte, 6);
-    F_B = bitRead(controlByte, 5);
-    L = bitRead(controlByte, 4);
-    R = bitRead(controlByte, 3);
-    
-    if(move == 1) {
-      if(F_B == 1) {
-        if(L == 1) {
-          if(R == 1) {
-            stationary();
-          }
-          if(R == 0) {
-            forwardLeft();
-          }
-        }
-        if(L == 0) {
-          if(R == 1) {
-            forwardRight();
-           
-          }
-          if(R == 0) {
-            forward();
-          }
-        }
-      }
-      if(F_B == 0) {
-        if(L == 1 && R == 1) {
-            backward();
-        }
-        else if(L == 0) {
-          if(R == 1) {
-            backwardRight();
-          }
-          if(R == 0) {
-            backward();
-          }
-        }
-        else {
-           backwardLeft();
-        }
-      }
+  if (!connectionActive && Serial.available()) {
+    if (Serial.read() == 127) {
+      // acknowledge handshake...
+      connectionActive = true; 
+      Serial.write(127);
+    } else {
+      // ...or flush
+      while(Serial.available()){Serial.read();}
     }
-    else {
+    
+  } else if (connectionActive) {
+
+    while ((Serial.available()<3) && ((millis() - starttime) < MAX_MILLIS_TO_WAIT)) {} // wait for data/timeout
+    
+    if(Serial.available() < 3)
+    {
+      // connection lost - request reconnect and stay put
+      Serial.write(63);
+      connectionActive = false;
+      while(Serial.available()){Serial.read();}
       stationary();
+    }
+    else
+    {
+      // data was received
+
+      controlByte = Serial.read();
+      turnSpeed = Serial.read();
+      globalSpeed = Serial.read();
+      
+      enable = bitRead(controlByte, 7);
+      move = bitRead(controlByte, 6);
+      F_B = bitRead(controlByte, 5);
+      L = bitRead(controlByte, 4);
+      R = bitRead(controlByte, 3);
+      
+      if(move == 1) {
+        if(F_B == 1) {
+          if(L == 1) {
+            if(R == 1) {
+              stationary();
+            }
+            if(R == 0) {
+              forwardLeft();
+            }
+          }
+          if(L == 0) {
+            if(R == 1) {
+              forwardRight();
+            
+            }
+            if(R == 0) {
+              forward();
+            }
+          }
+        }
+        if(F_B == 0) {
+          if(L == 1 && R == 1) {
+              backward();
+          }
+          else if(L == 0) {
+            if(R == 1) {
+              backwardRight();
+            }
+            if(R == 0) {
+              backward();
+            }
+          }
+          else {
+            backwardLeft();
+          }
+        }
+      }
+      else {
+        stationary();
+      }
     }
   }
 }
