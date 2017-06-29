@@ -15,7 +15,7 @@ def fetch_img():
     resp = urllib2.urlopen("http://192.168.1.114/html/cam_pic.php")
     image = np.asarray(bytearray(resp.read()), dtype="uint8")
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-    print time.time() - fetch_start_time
+    #print time.time() - fetch_start_time
 
     return image
 
@@ -31,11 +31,11 @@ def video(hsv,mask,img):
     cv2.imshow('img', img)
     return
 
-counter = 0
+stage = 0
 lastDirection = "full right"
 h = 18
 s = 100
-v = 100
+v = 75
 
 TCP_IP = '192.168.1.114'
 TCP_PORT = 26656
@@ -83,7 +83,7 @@ while True:
         approxFactor1 = 0.01*cv2.arcLength(selectedContours[0], True)
         approxPoly1 = cv2.approxPolyDP(selectedContours[0],approxFactor1,True)
         (x1,y1),(w1,h1),_ = cv2.minAreaRect(approxPoly1)
-        if (w1 > 20 or h1 > 20):
+        if (w1 > 25 or h1 > 25):
             #box1 = cv2.boxPoints(cv2.minAreaRect(approxPoly1))
             #box1 = np.int0(box1)
 
@@ -92,17 +92,18 @@ while True:
                 approxPoly2 = cv2.approxPolyDP(selectedContours[1],approxFactor2,True)
                 (x2,y2),(w2,h2),_ = cv2.minAreaRect(approxPoly2)
 
-                goal_found = True
-                ball_found = True
-
-                if ((w2 > 20 or h2 > 20) and h1 > 0 and w1 > 0):
+                
+                
+                if ((w2 > 25 or h2 > 25) and h1 > 0 and w1 > 0):
                     #box2 = np.int0(box2)
                     #cv2.drawContours(img, [box2],0,(255,255,0),2)
                     cv2.drawContours(img,[approxPoly2], 0,(255,0,0), 1)
+                    goal_found = True
+                    ball_found = True
                     if ((w1/h1 > 2 or h1/w1 > 2) or len(approxPoly1) < 7):
                         object1 = "goal"
                         object2 = "ball"
-
+                        
                         goalx = x1
                         ballx = x2
                         ball_width = w2
@@ -120,7 +121,7 @@ while True:
                     cv2.putText(img, object2, (int(x2),int(y2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
                 
                 else:
-                    if ((h1 != 0 and w1 != 0 and ((w1/h1 > 3 or h1/w1 > 3) or len(approxPoly1) < 7))):
+                    if ((h1 != 0 and w1 != 0 and ((w1/h1 > 2 or h1/w1 > 2) or len(approxPoly1) < 7))):
                         object1 = "goal"
                         goal_found = True
                         goalx = x1
@@ -137,8 +138,12 @@ while True:
             else:
                 if ((w1/h1 > 2 or h1/w1 > 2) or len(approxPoly1) < 7):
                     object1 = "goal"
+                    goal_found = True
+                    goalx = x1
                 else:
                     object1 = "ball"
+                    ball_found = True
+                    ballx = x1
                 cv2.putText(img, object1, (int(x1),int(y1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 2)
             #cv2.drawContours(img,[box1],0,(0,0,255),2)
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
@@ -150,42 +155,47 @@ while True:
     lt = 0
     x = 0
 
-    if (counter == 0): #Step 1: Turn till the ball is found
+    if (stage == 0): #Step 1: Turn till the ball is found
         x = -1.0
         rt = 0.5
-    if (ball_found and (counter == 0)):
-        counter = 1
-    if ball_found and (counter == 1): #Step 2: Go towards the ball
+    if (ball_found and (stage == 0)):
+        stage = 1
+    if ball_found and (stage == 1): #Step 2: Go towards the ball
         if ((center - tolerance) < ballx and (center+tolerance) > ballx):
-            x = 0.0
-            rt = 0.8
+            x = (ballx - center) / center
+            rt = 0.5
+            print "forward"
         elif ((center + tolerance) < ballx):
-            x = 0.5
+            x = (ballx - center) / center
             rt = 1
+            print "right"
             lastDirection = "full right"
         elif center-tolerance > ballx:
-            x = -0.5
+            x = (ballx - center) / center
             rt = 1.0
+            print "left"
             lastDirection = "full left"
-    elif (counter ==1):
+    elif (stage ==1):
         if lastDirection == "full left":
             x = -1.0
             rt = 0.5
         elif lastDirection == "full right":
             x = 1.0
             rt = 0.5
-    if ball_width >= center - tolerance: #Step 3: Stop when close to the ball
-        counter = 2
-        rt = 0.0
-    if counter == 2:
+    if ball_width >= 150 and stage == 1: #Step 3: Stop when close to the ball
+        stage = 2
+        print "ball stop"
+    if stage == 2:
+        print "Thing"
         x = -1.0
-        rt = 0.5
-    if goal_found and counter ==2:
-        counter = 3
-    if goal_found and counter == 3:
+        rt = 0.0
+        lt = 0.5
+    if goal_found and stage ==2:
+        stage = 3
+    if goal_found and stage == 3:
         if ((center-tolerance) < goalx and (center+tolerance) > goalx):
             x = 0
-            lt = 0.8
+            lt = 0.5
             rt = 0
         elif (center+tolerance) < goalx:
             x = -0.5
@@ -197,27 +207,49 @@ while True:
             lt = 1
             rt = 0
             lastDirection = "back right"
-    elif counter == 3:
+    elif stage == 3:
         if lastDirection == "back right":
             x = 1
             lt = 0.5
             rt = 0
-        elif lastDirection == "back left"
+        elif lastDirection == "back left":
             x = -1
             lt = 0.5
             rt = 0
-    if ball_found and goal_found and counter == 3:
-        counter = 4
+    if ball_found and goal_found and stage == 3:
+        rt = 0
+        lt = 0.3
+    if ball_found and goal_found and stage == 3 and ball_width <= 60 :
+        stage = 4
         rt = 0
         lt = 0
-
-    
-    obj = {'rt': rt, 'lt': 0.0, 'x': x}
+    if ball_found and goal_found and stage == 4:
+        stage = 5
+        if ballx < goalx: #ball is left of goal
+            print "Turn left"
+            x = -1
+            rt = 0.5
+            if ballx > 450:
+                stage = 6
+                rt = 0
+                lt = 0
+        if ballx > goalx: #ball is rigt of goal
+            print "Turn Right"
+            x = 1
+            rt = 0.5
+            if ballx < 60:
+                stage = 6
+                rt = 0
+                lt = 0
+    #print "ball:" + str(ball_found)
+    obj = {'rt': rt, 'lt': lt, 'x': x}
     MESSAGE = json.dumps(obj, separators=(',', ':'), sort_keys=True)
+
+    print MESSAGE
 
     sock.send(MESSAGE)
     data = sock.recv(1024)
-    print data
+    #print data
 
     video(hsv, mask,img)
 
