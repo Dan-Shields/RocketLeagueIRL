@@ -58,12 +58,11 @@ def stop_movement():
         control_array = [1, 0, 1, 0, 1]
         send_data(control_array, 0, 0)
 
-IMG_HEIGHT = 240
-IMG_WIDTH = 320
 
 SERIAL_ENABLED = False
 
 enable = 1
+counter = 0
 
 if SERIAL_ENABLED:
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
@@ -88,6 +87,7 @@ while True:
     ball_width = -1  
 
     img = fetch_img()
+    IMG_HEIGHT, IMG_WIDTH, _ = img.shape
     blurred = cv2.GaussianBlur(img, (11, 11),0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
@@ -177,23 +177,45 @@ while True:
             cv2.drawContours(img,[approxPoly1],0,(0,255,0),1)
 
     #print goalx
-    if ball_found and goal_found:
-        if ballx > goalx and goalx < 70:
-            #go straight until goalx from the left
-	    ball_goal_diff = ballx - goalx
-            if ball_goal_diff >= 20 or ball_goal_diff <= -20:
-                control_array = [enable, 1, 1, 0, 0]
-                send_data(control_array, 128, 255)
-        elif ballx > goalx and goalx > 70:
-            #move forward
-            control_array = [enable, 1, 1, 0, 1]
-            send_data(control_array, 127, 127)
-        else:
-            # always send a command to not move to keep-alive connection
-            stop_movement()
+    center = IMG_WIDTH/2
+    tolerance  = 0.1*IMG_WIDTH
 
-    else:
+    if (counter == 0):                                  #Step 1: Turn till the ball is found
+        control_array = [enable, 1, 1 ,1 ,0]            #rt(-255 to 255), lt(-255 to 255), x(-1,1)
+        send_data(control_array, 127,127)
+    if (ball_found and (counter == 0)):
+        counter = 1
+    if ball_found and (counter == 1):                   #Step 2: Go towards the ball
+        if ((center - tolerance) < ballx and (center + tolerance) > ballx):
+            send_data("forward")
+        elif ((center + tolerance) < ballx):
+            send_data( "slightly right")
+            lastDirection = "full right"
+        elif ((center-tolerance) > ballx:
+            send_data( "slightly left")
+            lastDirection = "full left"
+    elif (counter ==1):
+        send_data(lastDirection)                        
+    if ball_width >= center:                             #Step 3: Stop when close to the ball
+        counter = 2
         stop_movement()
+    #if ball_found and goal_found:
+        #if ballx > goalx and goalx < 70:
+            #go straight until goalx from the left
+	    #ball_goal_diff = ballx - goalx
+            #if ball_goal_diff >= 20 or ball_goal_diff <= -20:
+                #control_array = [enable, 1, 1, 0, 0]
+                #send_data(control_array, 128, 255)
+        #elif ballx > goalx and goalx > 70:
+            #move forward
+            #control_array = [enable, 1, 1, 0, 1] #[enable, move, forwards, left, right]
+            #send_data(control_array, 127, 127)   #(control_array , turn speed 0-straight 255 - maxturn, global speed 0-255)
+        #else:
+            # always send a command to not move to keep-alive connection
+            #stop_movement()
+
+    #else:
+        #stop_movement()
 
     video(hsv, mask,img)
 
