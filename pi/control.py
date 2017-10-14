@@ -1,50 +1,97 @@
 #!/usr/bin/env python
-import numpy as np
-import serial
 import socket
-import simplejson as json
 import time
 
-def send_data(control_array, turn_speed_int, global_speed_int):
-    if SERIAL_ENABLED:
-        a = np.packbits(control_array, axis=0)
-        b = np.append(a, [turn_speed_int, global_speed_int])
-        data = bytearray(iter(b))
+import simplejson as json
 
-        ser.write(data)
+import RPi.GPIO as gpio
 
-def send_handshake():
-    if SERIAL_ENABLED:
-        print "Sending handshake"
-        start_time = time.time()
-        ser.write(bytearray([127]))
 
-        while True:
-            if ser.inWaiting() > 0:
-                print "Handshake returned"
-		break
-            elif time.time() - start_time > 1:
-                sys.exit("Handshake failed or connection was lost")
-    else:
-        print "Serial disabled"
+def forwardLeft():
+    left.ChangeDutyCycle(turnSpeed * globalSpeed * 100)
+    right.ChangeDutyCycle(globalSpeed * 100)
 
-def stop_movement():
-    if SERIAL_ENABLED:
-        control_array = [1, 0, 1, 0, 1]
-        send_data(control_array, 0, 0)
+    gpio.output(1, 0)
+    gpio.output(2, 1)
+    gpio.output(3, 1)
+    gpio.output(4, 0)
+
+def forwardRight():
+    left.ChangeDutyCycle(globalSpeed * 100)
+    right.ChangeDutyCycle(turnSpeed * globalSpeed * 100)
+    
+    gpio.output(1, 0)
+    gpio.output(2, 1)
+    gpio.output(3, 1)
+    gpio.output(4, 0)
+
+def backwardLeft():
+    left.ChangeDutyCycle(globalSpeed * 100)
+    right.ChangeDutyCycle(turnSpeed * globalSpeed * 100)
+
+    gpio.output(1, 1)
+    gpio.output(2, 0)
+    gpio.output(3, 0)
+    gpio.output(4, 1)
+
+def backwardRight():
+    left.ChangeDutyCycle(turnSpeed * globalSpeed * 100)
+    right.ChangeDutyCycle(globalSpeed * 100)
+
+    gpio.output(1, 1)
+    gpio.output(2, 0)
+    gpio.output(3, 0)
+    gpio.output(4, 1)
+
+def forward():
+    left.ChangeDutyCycle(globalSpeed * 100)
+    right.ChangeDutyCycle(globalSpeed * 100)
+
+    gpio.output(1, 0)
+    gpio.output(2, 1)
+    gpio.output(3, 1)
+    gpio.output(4, 0)
+
+def backward():
+    left.ChangeDutyCycle(globalSpeed * 100)
+    right.ChangeDutyCycle(globalSpeed * 100)
+
+    gpio.output(1, 1)
+    gpio.output(2, 0)
+    gpio.output(3, 0)
+    gpio.output(4, 1)
+
+def stationary():
+    gpio.output(1, 0)
+    gpio.output(2, 0)
+    gpio.output(3, 0)
+    gpio.output(4, 0)
+
+
+gpio.setmode(gpio.BCM)
+gpio.setwarnings(False)
+
+gpio.setup(1, gpio.OUT)
+gpio.setup(2, gpio.OUT)
+gpio.setup(3, gpio.OUT)
+gpio.setup(4, gpio.OUT)
+
+#left
+gpio.setup(26, gpio.OUT)
+#right
+gpio.setup(23, gpio.OUT)
+
+left = gpio.PWM(26, 5000)
+left.start(0)
+right = gpio.PWM(23, 5000)
+right.start(0)
+
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 TCP_IP = "192.168.1.114"
 TCP_PORT = 26656
 s.bind((TCP_IP, TCP_PORT))
-
-SERIAL_ENABLED = 1
-
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0.050, bytesize=8)
-
-send_handshake()
-
-enable = 1
 
 print "Listening on address " + TCP_IP
 
@@ -55,10 +102,6 @@ print 'Connection address: ', addr
 last_activity = time.time()
 
 while True:
-    if SERIAL_ENABLED and ser.inWaiting() and ser.read == 63:
-        # reconnect was requested
-        send_handshake()
-
     data = conn.recv(1024)
     if not data and time.time() - last_activity > 1: break
     print "received data: ", data
@@ -71,11 +114,11 @@ while True:
     brake = joy['lt']
     x_axis = joy['x']
 
-    global_speed = int(abs(throttle - brake) * 255)
-    move = int(global_speed > 20)
+    globalSpeed = int(abs(throttle - brake) * 255)
+    move = int(globalSpeed > 20)
     F_B = int(throttle > brake)
 
-    turn_speed = 255 - int(abs(x_axis) * 200)
+    turnSpeed = 255 - int(abs(x_axis) * 200)
     L = int(x_axis < 0)
     R = int(x_axis > 0)
 
@@ -83,15 +126,36 @@ while True:
         L = int(not bool(L))
         R = int(not bool(R))
 
-    send_data([enable, move, F_B, L, R], turn_speed, global_speed)
-
-
     if move == 1 and F_B == 1:
         print "Moving forwards"
     elif move == 1 and F_B == 0:
         print "Moving backwards"
 
-stop_movement()
+    if move == 1:
+        if F_B == 1:
+            if L == 1:
+                if R == 1:
+                    stationary()
+                if R == 0:
+                    forwardLeft()
+            if L == 0:
+                if R == 1:
+                    forwardRight()
+                if R == 0:
+                    forward()
+        if F_B == 0:
+            if L == 1 and R == 1:
+                backward()
+            elif L == 0:
+                if R == 1: 
+                    backwardRight()
+                if R == 0:
+                    backward()
+            else:
+                backwardLeft()
+    else:
+        stationary()
 
-ser.close()
+stationary()
+
 conn.close()
