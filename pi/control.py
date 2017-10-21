@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import socket
-import time
 
 import simplejson as json
 
@@ -86,7 +85,7 @@ left.start(0)
 right = gpio.PWM(23, 5000)
 right.start(0)
 
-
+stationary()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 TCP_IP = "192.168.1.114"
@@ -99,26 +98,23 @@ s.listen(1)
 
 conn, addr = s.accept()
 print 'Connection address: ', addr
-last_activity = time.time()
 
 while True:
-    data = conn.recv(1024)
-    if not data and time.time() - last_activity > 1: break
-    print "received data: ", data
-    last_activity = time.time()
-    conn.send(data)
     
+    data = conn.recv(1024)
+    print "received data: ", data
+
     joy = json.loads(data)
 
     throttle = joy['rt']
     brake = joy['lt']
     x_axis = joy['x']
 
-    globalSpeed = int(abs(throttle - brake) * 255)
-    move = int(globalSpeed > 20)
+    globalSpeed = int(abs(throttle - brake))
+    move = int(globalSpeed > 0.2)
     F_B = int(throttle > brake)
 
-    turnSpeed = 255 - int(abs(x_axis) * 200)
+    turnSpeed = 1 - abs(x_axis)
     L = int(x_axis < 0)
     R = int(x_axis > 0)
 
@@ -147,7 +143,7 @@ while True:
             if L == 1 and R == 1:
                 backward()
             elif L == 0:
-                if R == 1: 
+                if R == 1:
                     backwardRight()
                 if R == 0:
                     backward()
