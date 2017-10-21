@@ -1,12 +1,26 @@
 import socket
 import simplejson as json
 import time
-import xbox
+from sdl2 import *
 
 
-joy = xbox.Joystick()         #Initialize joystick
+if SDL_Init(SDL_INIT_GAMECONTROLLER) < 0:
+    print SDL_GetError()
+    raise RuntimeError
 
-TCP_IP = '192.168.1.115'
+joy = None
+print SDL_NumJoysticks()
+for i in range(SDL_NumJoysticks()):
+    if SDL_IsGameController(i):
+        joy = SDL_GameControllerOpen(i)
+        print SDL_GameControllerMapping(joy)
+        if joy:
+            break
+if not joy:
+    raise RuntimeError
+
+
+TCP_IP = '192.168.1.116'
 TCP_PORT = 26656
 BUFFER_SIZE = 1024
 
@@ -14,18 +28,19 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((TCP_IP, TCP_PORT))
 
 while True:
-    x   = joy.leftX()        #X-axis of the left stick (values -1.0 to 1.0)
-    rt  = joy.rightTrigger() #Right trigger position (values 0 to 1.0)
-    lt  = joy.leftTrigger()
+    SDL_GameControllerUpdate()
+    leftX = SDL_GameControllerGetAxis(joy, SDL_CONTROLLER_AXIS_LEFTX) / 32768.0
+    leftT = SDL_GameControllerGetAxis(joy, SDL_CONTROLLER_AXIS_TRIGGERLEFT) / 32768.0
+    rightT = SDL_GameControllerGetAxis(joy, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) / 32768.0
 
-    obj = {'rt': rt, 'lt': lt, 'x': x}
+    obj = {'rt': rightT, 'lt': leftT, 'x': leftX}
     MESSAGE = json.dumps(obj, separators=(',', ':'), sort_keys=True)
 
     print MESSAGE
 
     sock.send(MESSAGE)
-    data = sock.recv(1024)
+    time.sleep(0.02)
 
-    print data
 
-joy.close()
+SDL_GameControllerClose(joy)
+SDL_Quit()
